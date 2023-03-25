@@ -20,3 +20,9 @@
         - Number of qubits needed dependes on the number of choices we're randomly choosing between -- specifcally, it is the number of bits required to encode a binary number from 0 to (num_choices - 1) -- i.e. it is ~log_2(num_choices)  
         Eg. If we need to randomly pick one of 8 choices, we can represent their zero-based indexes (0 - 7) in binary as 000 - 111, which requires 3 bits. Thus, we create a circuit containing 3 qubits, put each qubit in a superposition of `|0>` and `|1>`, and then measure all the qubits -- depending on how each of the three qubits collapses to either `|0>` and `|1>`, we'll get a binary number from 000 - 111, which tells us which of the 8 choices has been chosen.
         - ALternatively, see if there is an existing Qiskit library that does this for us
+    
+    - Printing out colour feedback for superposition of 2 words:
+        - Put words vertically on top of each other
+            - EAch letter separated by a tab, to ensure we can put two colours below its "column" if necessary?
+        - Print out colours horizontally, such that all the colours on the left correspond to *one* of the words (randomly selected) and the colours on the right correpsond to the other one
+            - The different orientation should already convey that there isn't a guaranteed correspondence between word on top and colours on left but, to make it even clearer, maybe have the left and right colours swap places a few times before settling down?
