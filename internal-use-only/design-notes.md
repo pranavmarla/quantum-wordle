@@ -23,6 +23,13 @@
     
     - Printing out colour feedback for superposition of 2 words:
         - Put words vertically on top of each other
-            - EAch letter separated by a tab, to ensure we can put two colours below its "column" if necessary?
+            - Each letter separated by a tab, to ensure we can put two colours below its "column" if necessary?
         - Print out colours horizontally, such that all the colours on the left correspond to *one* of the words (randomly selected) and the colours on the right correpsond to the other one
             - The different orientation should already convey that there isn't a guaranteed correspondence between word on top and colours on left but, to make it even clearer, maybe have the left and right colours swap places a few times before settling down?
+    - Printing colour feedback:
+        - Easiest approach is not to try and create custom images, but instead just print existing Unicode emojis for green square and yellow square. Unfortunately, there doesn't appear to be a grey square (which would match classical Wordle's colour scheme for wrong letter) so use red square instead.
+
+    - Displaying available letters
+        - Goal is to reproduce Wordle's feature where it shows, at bottom of page, which letters you've used and which are left
+        - Initial idea was to use Unicode strikthrough combining character, but effect is not that clear
+        - Instead, perhaps best to just have gap replacing used-up letter
