@@ -33,3 +33,11 @@
         - Goal is to reproduce Wordle's feature where it shows, at bottom of page, which letters you've used and which are left
         - Initial idea was to use Unicode strikthrough combining character, but effect is not that clear
         - Instead, perhaps best to just have gap replacing used-up letter
+        
+        - What logic does Wordle use when changing it?
+            - Looks like Wordle always changes letter colours to reflect the most certainty we have about it
+                - All letter backgrounds start off grey
+                - If you try a letter and:
+                    - It's wrong: Letter background turns black -- never changes again
+                    - It's right letter and position: Letter background turns green -- never changes again
+                    - It's right letter, but wrong position: Letter background turns yellow. This is the only case where it CAN change again -- if you guess the right position of that letter in a subsequent word, the background colour will change again from yellow to green
