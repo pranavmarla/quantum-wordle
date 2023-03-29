@@ -1,7 +1,7 @@
-# List (technically, tuple) of all past and future answers
+# List (technically, tuple) of all possible answers
 # Source: https://gist.github.com/cfreshman/a7b776506c73284511034e63af1017ee
 ANSWERS = ('APPLE')
-# List of all valid (allowed) guesses, excluding the words already in answers
+# List of all valid (allowed) guesses, excluding the words already in the answers list
 # Source: https://gist.github.com/cfreshman/d5fb56316158a1575898bba1eed3b5da
 ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB')
 
@@ -27,14 +27,33 @@ def safe_input(user_prompt=''):
     # Keep asking user for input until we get valid (non-empty) input
     while not user_input:
         # Note: input('') appears to be the same as input()
-        raw_user_input = input(user_prompt)
+        user_input = input(user_prompt)
         # Remove any extra spaces from user input
-        user_input = raw_user_input.strip()
+        user_input = user_input.strip()
         # user_input is an empty string
         if not user_input:
             print('Please enter valid input!\n')
     
+    # For consistency, ensure input is in upper case
+    user_input = user_input.upper()
     return user_input
+
+
+def validate_guess(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCLUDING_ANSWERS, answers=ANSWERS):
+    """Check if guess input by user is valid (allowed)
+    
+    Input:
+        guess: Guess word entered by user
+        allowed_guesses_excluding_answers: List of allowed guesses, excluding words that are already in the answers list
+        answers: List of possible answers
+
+    Output:
+        Returns True/False, depending on whether or not the guess is considered valid
+    """
+    if (guess in allowed_guesses_excluding_answers) or (guess in answers):
+        return True
+    else:
+        return False
 
 
 def run_game(classic_guess_option=CLASSIC_GUESS_OPTION, quantum_guess_option=QUANTUM_GUESS_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION):
@@ -57,5 +76,9 @@ def run_game(classic_guess_option=CLASSIC_GUESS_OPTION, quantum_guess_option=QUA
         if user_choice == classic_guess_option:
             guess = safe_input('Enter guess: ')
             print(f'You entered "{guess}"')
+            if validate_guess(guess):
+                print('Guess is valid')
+            else:
+                print('Guess is invalid')
 
 run_game()
