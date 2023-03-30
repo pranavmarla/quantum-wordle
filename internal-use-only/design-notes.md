@@ -1,17 +1,23 @@
 - Quantum Tic Tac Toe design, for reference:
     - Each of the 9 squares is represented by a qubit
     - Qubit in state `|0>` represents letter `O`, qubit in state `|1>` represents letter `X`
+        - Looks like this is the case even if a classical move is used (which technically doesn't *need* to be stored on a qubit)
     - When player chooses to entangle two spots, the underlying qubits are entangled
-        -In this case, they are both in superposition of `|0>`/`|1>`, but entangled in such a way that they always disagree with each other)
-    - When player chooses to measure board, all qubits are measured.
+        -In this case, they are both in superposition of `|0>`/`|1>`, but entangled in such a way that they always disagree with each other
+    - When player chooses to measure board, all qubits are measured (only 1 shot)
         - For each qubit that was in superposition, its spot in board is designated `O` or `X` depending on whether the measurement collapsed it to `|0>` or `|1>`
+        - If game gets to the end (board is filled up) and there are still un-measured superpositions, they are automatically measured
 
 - Wordle:
     - Need to guess a 5-letter word in 6 tries
 
 - Quantum Wordle design:
-    - Each row/turn has (in this quantum version) up to *two* words associated with it
+    - Each row/turn/attempt has (in this quantum version) up to *two* words associated with it
     - Each row is represented by 1 qubit -- thus, number of qubits needed is 6
+        - Reminder: When quantum circuit has multiple qubits, when they're measured, the values are not reported separately! Instead, they are measured as one big binary string (eg. `010001`) -- thus, I would need to precisely keep track of which char/bit refers to which attempt when retrieveing measurement result
+            - Having separate 1-qubit circuit for each attempt would make this simpler
+            - However, conceptually might make sense to group all the qubits that are serving same pourpoise in same circuit
+                - Also, measuring all qubits becomes a pain with multiple circuits since need to measure each 1-qubit circuit individually
     - The "classic" case is when the row has only one guess associated with it, represented by the qubit being in state `|0>`
     - The "quantum" case is when the row has two guesses associated with it, repesented by the qubit being in a superposition of `|0>` and `|1>` (eg. `|+>`). As long as the qubit is in superposition, the colour feedback is displayed for both guesses/words simultaneously, although it's unknown which word each feedback is for.
         - When the board is measured, which can be done by user at any time, all superpositions created so far (rows with two words each) are measured, and each row now only displays 1 word and the feedback for that word -- however, *which* of the two words gets chosen to be the final word for that row is determined by whether the qubit for that row collapsed to either `|0>` (first word) or `|1>` (second word)
