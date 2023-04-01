@@ -16,7 +16,7 @@
     - Each row is represented by 1 qubit -- thus, number of qubits needed is 6
         - Reminder: When quantum circuit has multiple qubits, when they're measured, the values are not reported separately! Instead, they are measured as one big binary string (eg. `010001`) -- thus, I would need to precisely keep track of which char/bit refers to which attempt when retrieveing measurement result
             - Having separate 1-qubit circuit for each attempt would make this simpler
-            - However, conceptually might make sense to group all the qubits that are serving same pourpoise in same circuit
+            - However, conceptually might make sense to group all the qubits that are serving same purpose in same circuit
                 - Also, measuring all qubits becomes a pain with multiple circuits since need to measure each 1-qubit circuit individually
     - The "classic" case is when the row has only one guess associated with it, represented by the qubit being in state `|0>`
     - The "quantum" case is when the row has two guesses associated with it, repesented by the qubit being in a superposition of `|0>` and `|1>` (eg. `|+>`). As long as the qubit is in superposition, the colour feedback is displayed for both guesses/words simultaneously, although it's unknown which word each feedback is for.
