@@ -34,10 +34,14 @@ WRONG_LETTER_COLOUR = '🟥'
 class Attempt:
     """Stores data about each attempt"""
 
-    def __init__(self):
-        # Contains the words guessed by the user in this attempt (in the order that they guessed them in)
-        guesses = []
-        qubit_index = None
+    def __init__(self, attempt_num, qubit_index):
+        # Keeps track of which attempt this is (starting at 1)
+        self.attempt_num = attempt_num
+        # Keeps track of which qubit is used to store info regarding this attempt's guesses
+        self.qubit_index = qubit_index
+        # Dictionary mapping each guess to colour feedback string indicating its correctness
+        # Contains the words guessed by the user in this attempt, in the order that they guessed them in
+        self.guess_to_feedback_dict = {}
 
 
 def safe_input(user_prompt=''):
@@ -86,31 +90,79 @@ def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCL
         return False
 
 
-def prepare_game_state(game_circuit, max_attempts=MAX_ATTEMPTS):
+def prepare_game_state(max_attempts=MAX_ATTEMPTS):
     """Prepare the variable that will store the state of the game at any point
     
     Input:
         max_attempts
         
     Output:
-        Variable that can store game state
+        attempts_list: Stores current game state (state of each attempt)
+        game_circuit: Quantum circuit used to store info regarding each attempt's guesses
     """
 
     num_qubits = num_classical_bits = max_attempts
     game_circuit = QuantumCircuit(num_qubits, num_classical_bits)
 
-    
-
+    attempts_list = []
     for i in range(max_attempts):
-
-
-    # List of max_attempts lists , where each of the inner lists represents one attempt
-    return [[] for i in range(max_attempts)]
-
-
-def print_game_state(game_state):
+        qubit_index = i
+        attempt_num = i + 1
+        attempts_list.append(Attempt(attempt_num, qubit_index))
     
-    print('Attempt')
+    return attempts_list, game_circuit
+
+
+# def print_same_line(output_string):
+#     """Print output without automatically adding a newline at the end"""
+#     print(foutput_string, end='')
+
+def print_guess(guess_string):
+    """Print a single guess word, letter by letter. Does not print a newline at the end."""
+    for char in guess_string:
+        # Pad each character of guess to be two spaces, to align with each character (coloured square) of the colour feedback string which seems to take up two spaces
+        print(f'{char:>2}', end='')
+
+
+def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=' '):
+
+    if attempt_num != 1:
+        # Add three new lines before every attempt (except the first)
+        print('\n\n\n', end='')
+
+    # For reasonably consistent output across different platforms, only use spaces, not tabs (as tabs can be rendered differently on different platforms)!
+    # Number of spaces in below commands determined experimentally
+    print(f'Attempt {attempt_num}:{space*13}', end='')
+
+    # Since this is a classical guess, we know there is only one guess in the dict
+    guess, feedback = list(guess_to_feedback_dict.items())[0]
+    print_guess(guess)
+    # Print one new line
+    # Same as: print('\n', end='')
+    print()
+    # Note that this automatically prints a newline at the end
+    print(f'{space*23}{feedback}')
+
+
+def print_game_state(attempts_list, game_circuit, max_attempts=MAX_ATTEMPTS):
+    
+    for index, attempt in enumerate(attempts_list):
+        attempt_num = index + 1
+        print(f'Attempt {index + 1}:', end='')
+
+        # Print guesses
+        for guess in attempt.guess_to_feedback_dict:
+            # Tab indentation before each guess
+            print('\t')
+            for char in guess:
+                # Pad each character of guess to be two spaces, to align with each character (coloured square) of the colour feedback string which seems to take up two spaces
+                print(f'{char:>2}', end='')
+        
+        # New line
+        print()
+
+        # Print colour feedback corresponding to each guess
+
 
 
 
@@ -299,14 +351,15 @@ def test_check_guess_correctness():
 # # Uncomment to run test suite
 # test_check_guess_correctness()
 
+
 def run_game(classical_guess_option=CLASSICAL_GUESS_OPTION, quantum_guess_option=QUANTUM_GUESS_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, max_attempts=MAX_ATTEMPTS):
 
     # Print only the first time
     print('Welcome to Quantum Wordle!')
     print('Can you guess the mystery five-letter word in six attempts or less?\n')
 
-    game_state = prepare_game_state()
-    print_game_state(game_state)
+    attempts_list, game_circuit = prepare_game_state()
+    print_game_state(attempts_list, game_circuit)
 
     keep_playing = True
     while keep_playing:
