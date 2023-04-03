@@ -20,8 +20,8 @@ ANSWERS = ('APPLE')
 ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB')
 
 # The strings that the user needs to enter to select these options
-CLASSICAL_GUESS_OPTION = '1'
-QUANTUM_GUESS_OPTION = '2'
+CLASSICAL_ATTEMPT_OPTION = '1'
+QUANTUM_ATTEMPT_OPTION = '2'
 MEASURE_OPTION = '3'
 EXIT_OPTION = '4'
 
@@ -147,10 +147,18 @@ def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHA
     print(f'{space*23}{feedback}')
 
 
+def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
+
+
+
 def print_game_state(attempts_list, game_circuit, max_attempts=MAX_ATTEMPTS):
     
     for index, attempt in enumerate(attempts_list):
         attempt_num = index + 1
+        
+        # Classical 
+        if len(attempt.guess_to_feedback_dict) <= 1:
+        
         print(f'Attempt {index + 1}:', end='')
 
         # Print guesses
@@ -355,7 +363,7 @@ def test_check_guess_correctness():
 # test_check_guess_correctness()
 
 
-def run_game(classical_guess_option=CLASSICAL_GUESS_OPTION, quantum_guess_option=QUANTUM_GUESS_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, max_attempts=MAX_ATTEMPTS):
+def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, max_attempts=MAX_ATTEMPTS):
 
     # Print only the first time
     print('Welcome to Quantum Wordle!')
@@ -369,13 +377,13 @@ def run_game(classical_guess_option=CLASSICAL_GUESS_OPTION, quantum_guess_option
         
         keep_playing = False
         print('Select an option by entering the corresponding number:')
-        print(f'{classical_guess_option}: Classical guess (1 word)')
-        print(f'{quantum_guess_option}: Quantum guess (superposition of 2 words)')
+        print(f'{classical_attempt_option}: Classical attempt (1 guess)')
+        print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
         print(f'{measure_option}: Measure (collapse) all superpositions')
         print(f'{exit_option}: Exit')
         user_choice = safe_input('--> ')
 
-        if user_choice == classical_guess_option:
+        if user_choice == classical_attempt_option:
             guess = safe_input('Enter guess: ')
             print(f'You entered "{guess}"')
             if is_guess_valid(guess):
