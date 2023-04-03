@@ -7,6 +7,7 @@
     - When player chooses to measure board, all qubits are measured (only 1 shot)
         - For each qubit that was in superposition, its spot in board is designated `O` or `X` depending on whether the measurement collapsed it to `|0>` or `|1>`
         - If game gets to the end (board is filled up) and there are still un-measured superpositions, they are automatically measured
+    - Note: Uses `from IPython.display import clear_output; clear_output(wait=False)` to replace previous output!
 
 - Wordle:
     - Need to guess a 5-letter word in 6 tries
