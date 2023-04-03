@@ -1,4 +1,5 @@
 from qiskit import Aer, execute, QuantumCircuit
+from time import sleep
 
 
 # Every answer and guess has to contain this many letters/characters
@@ -33,6 +34,13 @@ WRONG_LETTER_COLOUR = '🟥'
 # Char representing one space
 SPACE_CHAR = ' '
 
+NUM_GUESSES_IN_SUPERPOSITION = 2
+
+# Backend used to execute quantum circuits
+QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
+
+# When this character is printed, it moves the cursor back to the beginning of the current line, which allows us to potentially overwrite previous output
+RESET_CURSOR_CHAR = '\r'
 
 class Attempt:
     """Stores data about each attempt"""
@@ -74,6 +82,19 @@ def safe_input(user_prompt=''):
         user_input = user_input.upper()
     
     return user_input
+
+
+def safe_guess_input(user_prompt=''):
+    """Safely take in guess supplied by user, returning only when the user has entered a valid guess"""
+    received_valid_guess = False
+    while not received_valid_guess:
+        guess = safe_input(user_prompt)
+        # print(f'You entered "{guess}"')
+        if is_guess_valid(guess):
+            received_valid_guess = True
+        else:
+            print('Guess is invalid!')
+    return guess
 
 
 def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCLUDING_ANSWERS, answers=ANSWERS):
@@ -120,6 +141,7 @@ def prepare_game_state(max_attempts=MAX_ATTEMPTS):
 #     """Print output without automatically adding a newline at the end"""
 #     print(foutput_string, end='')
 
+
 def print_guess(guess_string):
     """Print a single guess word, letter by letter. Does not print a newline at the end."""
     for char in guess_string:
@@ -127,47 +149,133 @@ def print_guess(guess_string):
         print(f'{char:>2}', end='')
 
 
-def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
+def print_guess_feedback(feedback_string, space=SPACE_CHAR, output_prefix=''):
+    """Print string of coloured squares, where each coloured square indicates the correctness of the corresponding letter of the guess. Does not print a newline at the end."""
+    print(f'{output_prefix}{space*23}{feedback_string}', end='')
 
-    if attempt_num != 1:
-        # Add three new lines before every attempt (except the first)
-        print('\n\n\n', end='')
+
+def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
 
     # For reasonably consistent output across different platforms, only use spaces, not tabs (as tabs can be rendered differently on different platforms)!
     # Number of spaces in below commands determined experimentally
     print(f'Attempt {attempt_num}:{space*13}', end='')
 
-    # Since this is a classical guess, we know there is only one guess in the dict
+    # Since this is a classical attempt, we know there is only one guess in the dict
     guess, feedback = list(guess_to_feedback_dict.items())[0]
+    # Print guess
     print_guess(guess)
     # Print one new line
     # Same as: print('\n', end='')
     print()
-    # Note that this automatically prints a newline at the end
-    print(f'{space*23}{feedback}')
+    # Print feedback
+    print_guess_feedback(feedback)
+    print()
 
 
-def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
+#! TODO: Ideally, for a list of size N, this should be able to generate a list index from 0 to N-1. Attempted this prevously, but turned out to be trickier than I thought so sticking to simpler 0/1 random number generator for now
+def random_0_1_generator(quantum_backend=QUANTUM_BACKEND):
+    """Randomly generate either 0 or 1"""
+    
+    num_qubits = num_classical_bits = 1
+    random_num_circuit = QuantumCircuit(num_qubits, num_classical_bits)
 
+    qubit_index = classical_bit_index = 0
+    # Put qubit into superposition of 0 and 1
+    random_num_circuit.h(qubit_index)
+    # Measure qubit
+    random_num_circuit.measure(qubit_index, classical_bit_index)
+
+    # Execute circuit
+    job = execute(random_num_circuit, backend=quantum_backend, shots=1)
+    result = job.result()
+    counts = result.get_counts()
+    # Since we only ran one shot above, we already know that we only have one measured value
+    # Eg. '1'
+    measured_binary_value_string = list(counts.keys())[0]
+    # Eg. 1
+    measured_decimal_value = int(measured_binary_value_string, base=2)
+
+    return measured_decimal_value
+
+
+def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
+
+    # For reasonably consistent output across different platforms, only use spaces, not tabs (as tabs can be rendered differently on different platforms)!
+    # Number of spaces in below commands determined experimentally
+    print(f'Attempt {attempt_num}:{space*6}', end='')
+
+    # Since this is a quantum attempt, we know there are multiple guesses in the dict
+    # Technically, these are view objects, not lists
+    guesses = guess_to_feedback_dict.keys()
+    feedback_list = list(guess_to_feedback_dict.values())
+
+    # Print guesses
+    for guess_index, guess in enumerate(guesses):
+        # Print separator before every guess, except the first (0th index)
+        if guess_index != 0:
+            print(f'{"|":>3} ', end='')
+        print_guess(guess)
+    
+    # After all guesses have been printed on the same line, go to the next line
+    print()
+
+    # Print feedback strings
+
+    # Unlike guesses, which are always displayed in order of entry, feedback for a superposition of guesses is intentionally displayed in a RANDOM order
+    # Thus, for simplicity, create a separate list consisting of the same feedback strings as feedback_list, but in random order -- this list will be used only for DISPLAYING the feedback
+    feedback_display_list = []
+    # Randomly select first feedback from feedback_list
+    #! NOTE: We assume here that the superposition consists of only 2 guesses, which implies that there are only 2 feedback strings in feedback_list, which implies that the only valid list indices are 0 and 1
+    #! TODO: Ideally, this code should be able to handle feedback_list of any size
+    random_feedback_list_index = random_0_1_generator()
+    feedback_display_list.append(feedback_list[random_feedback_list_index])
+    # If: 
+    #   random_feedback_list_index = 0 -> remaining_feedback_list_index = 1
+    #   random_feedback_list_index = 1 -> remaining_feedback_list_index = 0
+    remaining_feedback_list_index = 1 - random_feedback_list_index
+    feedback_display_list.append(feedback_list[remaining_feedback_list_index])
+
+    # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
+    # Note: To avoid accidentally revealing which is the "real" first feedback (corresponding to first guess), we iterate through feedback_display_list instead of the original feedback_list -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
+    # The number of iterations and sleep duration were determined experimentally
+    for _ in range(3):
+        for feedback in feedback_display_list:
+            print_guess_feedback(feedback, output_prefix=reset_cursor_char)
+            sleep(0.3)
+    
+    # Ensure that the below, final print of all feedback will overwrite the temporary output above
+    print(reset_cursor_char, end='')
+
+    # Finally, print the feedback strings once separately, above each other
+    # This is a static way of conveying that the feedback strings are in superposition
+    for feedback_index, feedback in enumerate(feedback_display_list):
+        # Print separator above every feedback string, except the first (0th index)
+        if feedback_index != 0:
+            print(f'{space*23}-----------')
+        print_guess_feedback(feedback)
+        print()
 
 
 def print_game_state(attempts_list, game_circuit, max_attempts=MAX_ATTEMPTS):
     
     for index, attempt in enumerate(attempts_list):
+        
         attempt_num = index + 1
-        
-        # Classical 
-        if len(attempt.guess_to_feedback_dict) <= 1:
-        
-        print(f'Attempt {index + 1}:', end='')
+        guess_to_feedback_dict = attempt.guess_to_feedback_dict
 
-        # Print guesses
-        for guess in attempt.guess_to_feedback_dict:
-            # Tab indentation before each guess
-            print('\t')
-            for char in guess:
-                # Pad each character of guess to be two spaces, to align with each character (coloured square) of the colour feedback string which seems to take up two spaces
-                print(f'{char:>2}', end='')
+        if attempt_num != 1:
+            # Add three new lines before every attempt (except the first)
+            print('\n\n\n', end='')
+
+        # Classical attempt
+        if len(guess_to_feedback_dict) <= 1:
+            print_classical_attempt(attempt_num,guess_to_feedback_dict)
+        
+        # Quantum attempt
+        else:
+            print_quantum_attempt(attempt_num, guess_to_feedback_dict)
+
+        
         
         # New line
         print()
@@ -363,7 +471,7 @@ def test_check_guess_correctness():
 # test_check_guess_correctness()
 
 
-def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, max_attempts=MAX_ATTEMPTS):
+def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts=MAX_ATTEMPTS):
 
     # Print only the first time
     print('Welcome to Quantum Wordle!')
@@ -384,11 +492,11 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         user_choice = safe_input('--> ')
 
         if user_choice == classical_attempt_option:
-            guess = safe_input('Enter guess: ')
-            print(f'You entered "{guess}"')
-            if is_guess_valid(guess):
-                print('Guess is valid')
-            else:
-                print('Guess is invalid')
+            guess = safe_guess_input('Enter guess: ')
+        elif user_choice == quantum_attempt_option:
+            guesses = []
+            # guess_num goes from 1 to num_guesses_in_superposition
+            for guess_num in range(1, num_guesses_in_superposition + 1):
+                guesses.append(safe_guess_input(f'Enter guess {guess_num}: '))
 
 run_game()
