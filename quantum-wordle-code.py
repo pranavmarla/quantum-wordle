@@ -39,7 +39,7 @@ NUM_GUESSES_IN_SUPERPOSITION = 2
 # Backend used to execute quantum circuits
 QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
 
-# When this character is printed, it moves the cursor back to the beginning of the current line, which allows us to potentially overwrite previous output
+# When this character is printed, it moves the cursor back to the beginning of the current line, which allows us to potentially overwrite any previous output on the current line
 RESET_CURSOR_CHAR = '\r'
 
 class Attempt:
