@@ -30,6 +30,9 @@ RIGHT_LETTER_RIGHT_SPOT_COLOUR = '🟩'
 RIGHT_LETTER_WRONG_SPOT_COLOUR = '🟨'
 WRONG_LETTER_COLOUR = '🟥'
 
+# Char representing one space
+SPACE_CHAR = ' '
+
 
 class Attempt:
     """Stores data about each attempt"""
@@ -124,7 +127,7 @@ def print_guess(guess_string):
         print(f'{char:>2}', end='')
 
 
-def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=' '):
+def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
 
     if attempt_num != 1:
         # Add three new lines before every attempt (except the first)
