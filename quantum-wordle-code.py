@@ -1,5 +1,6 @@
 from math import floor, log2
 from qiskit import Aer, execute, QuantumCircuit
+import sys
 from time import sleep
 
 
@@ -151,7 +152,7 @@ def setup_game(max_attempts=MAX_ATTEMPTS):
     # Randomly select answer
     answer = choose_answer()
 
-    # Create variable to store info about each attempt
+    # Store info about each attempt
     attempts_list = []
     for i in range(max_attempts):
         qubit_index = i
@@ -537,6 +538,12 @@ def test_get_guess_feedback():
 # test_get_guess_feedback()
 
 
+def encode_quantum_attempt(game_circuit):
+    """Encode quantum attempt on underlying quantum circuit"""
+
+
+
+
 def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts=MAX_ATTEMPTS):
 
     # Print only the first time
@@ -552,10 +559,10 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
         print_game_state(attempts_list, game_circuit)
         
-        keep_playing = False
+        # keep_playing = False
         current_attempt = attempts_list[attempt_num - 1]
 
-        print('Select an option by entering the corresponding number:')
+        print('\nSelect an option by entering the corresponding number:')
         print(f'{classical_attempt_option}: Classical attempt (1 guess)')
         print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
         print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
@@ -563,22 +570,36 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         user_choice = safe_input('--> ')
 
         if user_choice == classical_attempt_option:
-            # Current attempt will be used up
-            attempt_num += 1
             guess = safe_guess_input('Enter guess: ')
             if guess != answer:
-                # If the guess is not correct, keep playing
-                keep_playing = True
+                # # If the guess is not correct, keep playing
+                # keep_playing = True
                 current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+            # Current attempt has been used up
+            attempt_num += 1
         
         elif user_choice == quantum_attempt_option:
-            attempt_num += 1
             # Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty has to WHICH guess is correct), we keep playing
-            keep_playing = True
+            # keep_playing = True
             guesses = []
             # guess_num goes from 1 to num_guesses_in_superposition
             for guess_num in range(1, num_guesses_in_superposition + 1):
                 guess = safe_guess_input(f'Enter guess {guess_num}: ')
                 current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+            
+            # Current attempt has been used up
+            attempt_num += 1
+
+        elif user_choice == measure_option:
+            # Note that this choice does NOT use up an attempt!
+            pass
+
+        elif user_choice == exit_option:
+            print('Exiting ...')
+            # keep_playing = False
+            sys.exit()
+
+        else:
+            print('Invalid choice! Please choose one of the available options')
 
 run_game()
