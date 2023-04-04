@@ -41,6 +41,13 @@
         - Classical Wordle only selects 1 answer per day
         - Since mine is a demonstration, it should NOT be tied to the same word per day. Also, since my answer list (unlike original one from Wordle) is in alphabetical order, no fun if I go in order -- thus, pick a new answer at random every time the game is executed
 
+    - Exiting game:
+        We stop running game only under following circumstances:
+            - It's a CLASSICAL attempt and the guess is right (i.e. guess = answer)
+            - User chose to measure all quantum attempts and one of them collapsed to classical attempt with the right guess
+            - All 6 attempts have been used up, any quantum attempts have been measured and resulting classical attempts did not have right guess
+            - User chose to exit
+    
     - Displaying available letters
         - Goal is to reproduce Wordle's feature where it shows, at bottom of page, which letters you've used and which are left
         - Initial idea was to use Unicode strikthrough combining character, but effect is not that clear
