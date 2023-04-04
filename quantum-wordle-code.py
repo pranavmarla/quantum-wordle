@@ -6,7 +6,7 @@ from time import sleep
 # Every answer and guess has to contain this many letters/characters
 WORD_LENGTH = 5
 
-# Number of chances the user has to guess the answer
+# Number of chances that user has to guess the answer
 MAX_ATTEMPTS = 6
 
 # Max number of guesses user can make in one attempt
@@ -15,11 +15,11 @@ MAX_GUESSES_PER_ATTEMPT = 2
 # List (technically, tuple) of all possible answers
 # Source: https://gist.github.com/cfreshman/a7b776506c73284511034e63af1017ee
 #! DEBUG: Replace with actual list
-ANSWERS = ('APPLE')
+ANSWERS = ('APPLE', 'PIETY')
 # List of all valid (allowed) guesses, excluding the words already in the answers list
 # Source: https://gist.github.com/cfreshman/d5fb56316158a1575898bba1eed3b5da
 #! DEBUG: Replace with actual list
-ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB')
+ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB', 'GRAZE', 'WEEPY')
 
 # The strings that the user needs to enter to select these options
 CLASSICAL_ATTEMPT_OPTION = '1'
@@ -31,6 +31,19 @@ EXIT_OPTION = '4'
 RIGHT_LETTER_RIGHT_SPOT_COLOUR = '🟩'
 RIGHT_LETTER_WRONG_SPOT_COLOUR = '🟨'
 WRONG_LETTER_COLOUR = '🟥'
+# Used to indicate lack of feedback
+NO_FEEDBACK_COLOUR = '⬜'
+
+# Colour feedback string when the guess is correct (i.e. matches the answer)
+# Eg. Assuming word_length = 5 and RIGHT_LETTER_RIGHT_SPOT_COLOUR = '🟩': 
+#   '🟩🟩🟩🟩🟩'
+RIGHT_GUESS_FEEDBACK_STRING = WORD_LENGTH * RIGHT_LETTER_RIGHT_SPOT_COLOUR
+
+# Used as a placeholder for when the user hasn't made a guess yet
+NO_GUESS_STRING = WORD_LENGTH * '_'
+# "Blank" colour feedback string used to convey that we don't have any feedback yet
+NO_FEEDBACK_STRING = WORD_LENGTH * NO_FEEDBACK_COLOUR
+
 
 # Char representing one space
 SPACE_CHAR = ' '
@@ -85,16 +98,17 @@ def safe_input(user_prompt=''):
     return user_input
 
 
-def safe_guess_input(user_prompt=''):
+def safe_guess_input(user_prompt='', allowed_word_length=WORD_LENGTH):
     """Safely take in guess supplied by user, returning only when the user has entered a valid guess"""
+    
     received_valid_guess = False
     while not received_valid_guess:
         guess = safe_input(user_prompt)
-        # print(f'You entered "{guess}"')
-        if is_guess_valid(guess):
+        if (len(guess) == allowed_word_length) and is_guess_valid(guess):
             received_valid_guess = True
         else:
             print('Guess is invalid!')
+    
     return guess
 
 
@@ -115,27 +129,40 @@ def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCL
         return False
 
 
-def prepare_game_state(max_attempts=MAX_ATTEMPTS):
-    """Prepare the variable that will store the state of the game at any point
+def choose_answer(answer_list=ANSWERS):
+    """Randomly chooses a word from the list of all possible answers to be the answer for this run of the game"""
+    answer_index = random_number_generator(max=(len(answer_list) - 1))
+    answer = answer_list[answer_index]
+    return answer
+
+
+def setup_game(max_attempts=MAX_ATTEMPTS):
+    """Perform required setup for the game
     
     Input:
-        max_attempts
+        max_attempts: Number of chances that user has to guess the answer
         
     Output:
+        answer: Randomly-selected answer for this run of the game
         attempts_list: Stores current game state (state of each attempt)
-        game_circuit: Quantum circuit used to store info regarding each attempt's guesses
+        game_circuit: Quantum circuit used to encode info regarding each attempt's guesses
     """
 
-    num_qubits = num_classical_bits = max_attempts
-    game_circuit = QuantumCircuit(num_qubits, num_classical_bits)
+    # Randomly select answer
+    answer = choose_answer()
 
+    # Create variable to store info about each attempt
     attempts_list = []
     for i in range(max_attempts):
         qubit_index = i
         attempt_num = i + 1
         attempts_list.append(Attempt(attempt_num, qubit_index))
-    
-    return attempts_list, game_circuit
+
+    # Setup quantum circuit to encode info regarding the attempts
+    num_qubits = num_classical_bits = max_attempts
+    game_circuit = QuantumCircuit(num_qubits, num_classical_bits)
+
+    return answer, attempts_list, game_circuit
 
 
 # def print_same_line(output_string):
@@ -155,9 +182,24 @@ def print_guess_feedback(feedback_string, space=SPACE_CHAR, output_prefix=''):
     print(f'{output_prefix}{space*23}{feedback_string}', end='')
 
 
-def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
+def print_unused_attempt(attempt_num, no_guess_string=NO_GUESS_STRING, no_feedback_string=NO_FEEDBACK_STRING, space=SPACE_CHAR):
+    """Prints unused attempt (i.e. attempt that user has not got to yet)"""
 
     # For reasonably consistent output across different platforms, only use spaces, not tabs (as tabs can be rendered differently on different platforms)!
+    # Number of spaces in below commands determined experimentally
+    print(f'Attempt {attempt_num}:{space*13}', end='')
+
+    # Print placeholder to indicate no guess yet
+    print_guess(no_guess_string)
+    print()
+    # Print placehodler to indicate no guess feedback yet
+    print_guess_feedback(no_feedback_string)
+    print()
+
+
+def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR):
+    """Prints classical attempt. Assumed to have only one guess"""
+
     # Number of spaces in below commands determined experimentally
     print(f'Attempt {attempt_num}:{space*13}', end='')
 
@@ -227,9 +269,9 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
     
     return random_decimal_num
 
+
 def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
 
-    # For reasonably consistent output across different platforms, only use spaces, not tabs (as tabs can be rendered differently on different platforms)!
     # Number of spaces in below commands determined experimentally
     print(f'Attempt {attempt_num}:{space*6}', end='')
 
@@ -297,25 +339,22 @@ def print_game_state(attempts_list, game_circuit, max_attempts=MAX_ATTEMPTS):
             # Add three new lines before every attempt (except the first)
             print('\n\n\n', end='')
 
+        num_guesses_in_attempt = len(guess_to_feedback_dict)
+
+        # User hasn't gotten to this attempt yet
+        if num_guesses_in_attempt < 1:
+            print_unused_attempt(attempt_num)
+
         # Classical attempt
-        if len(guess_to_feedback_dict) <= 1:
+        elif num_guesses_in_attempt == 1:
             print_classical_attempt(attempt_num,guess_to_feedback_dict)
         
         # Quantum attempt
         else:
             print_quantum_attempt(attempt_num, guess_to_feedback_dict)
 
-        
-        
-        # New line
-        print()
 
-        # Print colour feedback corresponding to each guess
-
-
-
-
-def check_guess_correctness(guess_str, answer_str, word_length=WORD_LENGTH):
+def get_guess_feedback(guess_str, answer_str, word_length=WORD_LENGTH, right_guess_feedback_string=RIGHT_GUESS_FEEDBACK_STRING):
     """Compares the guess with the answer and returns colour feedback indicating how close the guess was.
 
     Input:
@@ -331,10 +370,7 @@ def check_guess_correctness(guess_str, answer_str, word_length=WORD_LENGTH):
 
     # The guess is the same as the answer -- i.e. all the letters of the guess word are both the right letter and in the right position
     if guess_str == answer_str:
-        # Assuming word_length = 5 and RIGHT_LETTER_RIGHT_SPOT_COLOUR = '🟩':
-        # '🟩🟩🟩🟩🟩'
-        colour_feedback_str = word_length * RIGHT_LETTER_RIGHT_SPOT_COLOUR
-        return colour_feedback_str
+        return right_guess_feedback_string
     
     else:
         # Convert both guess and answer from string to list
@@ -403,8 +439,8 @@ def check_guess_correctness(guess_str, answer_str, word_length=WORD_LENGTH):
         return colour_feedback_str
 
 
-def test_check_guess_correctness():
-    """Used to quickly test check_guess_correctness()"""
+def test_get_guess_feedback():
+    """Used to quickly test get_guess_feedback()"""
 
     # Each tuple contains the input guess word, the answer word it will be compared against and the expected output colour feedback indicating how close/correct the guess was
     test_value_tuples = \
@@ -487,7 +523,7 @@ def test_check_guess_correctness():
         ]
 
     for guess_str, answer_str, expected_colour_feedback_str in test_value_tuples:
-        actual_colour_feedback_str = check_guess_correctness(guess_str, answer_str)
+        actual_colour_feedback_str = get_guess_feedback(guess_str, answer_str)
         if actual_colour_feedback_str == expected_colour_feedback_str:
             print('Pass')
         else:
@@ -498,7 +534,7 @@ def test_check_guess_correctness():
             print('\tActual:\t\t{}'.format('\t'.join(actual_colour_feedback_str)))
 
 # # Uncomment to run test suite
-# test_check_guess_correctness()
+# test_get_guess_feedback()
 
 
 def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts=MAX_ATTEMPTS):
@@ -507,13 +543,18 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
     print('Welcome to Quantum Wordle!')
     print('Can you guess the mystery five-letter word in six attempts or less?\n')
 
-    attempts_list, game_circuit = prepare_game_state()
-    print_game_state(attempts_list, game_circuit)
-
+    answer, attempts_list, game_circuit = setup_game()
+    
     keep_playing = True
-    while keep_playing:
+    # Number of next available attempt
+    attempt_num = 1
+    while keep_playing and (attempt_num <= max_attempts):
+
+        print_game_state(attempts_list, game_circuit)
         
         keep_playing = False
+        current_attempt = attempts_list[attempt_num - 1]
+
         print('Select an option by entering the corresponding number:')
         print(f'{classical_attempt_option}: Classical attempt (1 guess)')
         print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
@@ -522,11 +563,22 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         user_choice = safe_input('--> ')
 
         if user_choice == classical_attempt_option:
+            # Current attempt will be used up
+            attempt_num += 1
             guess = safe_guess_input('Enter guess: ')
+            if guess != answer:
+                # If the guess is not correct, keep playing
+                keep_playing = True
+                current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+        
         elif user_choice == quantum_attempt_option:
+            attempt_num += 1
+            # Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty has to WHICH guess is correct), we keep playing
+            keep_playing = True
             guesses = []
             # guess_num goes from 1 to num_guesses_in_superposition
             for guess_num in range(1, num_guesses_in_superposition + 1):
-                guesses.append(safe_guess_input(f'Enter guess {guess_num}: '))
+                guess = safe_guess_input(f'Enter guess {guess_num}: ')
+                current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
 
 run_game()
