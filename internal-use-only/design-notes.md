@@ -36,6 +36,11 @@
     - Printing colour feedback:
         - Easiest approach is not to try and create custom images, but instead just print existing Unicode emojis for green square and yellow square. Unfortunately, there doesn't appear to be a grey square (which would match classical Wordle's colour scheme for wrong letter) so use red square instead.
 
+    - Answer selection:
+        - Classical Wordle takes answer from answer list in order
+        - Classical Wordle only selects 1 answer per day
+        - Since mine is a demonstration, it should NOT be tied to the same word per day. Also, since my answer list (unlike original one from Wordle) is in alphabetical order, no fun if I go in order -- thus, pick a new answer at random every time the game is executed
+
     - Displaying available letters
         - Goal is to reproduce Wordle's feature where it shows, at bottom of page, which letters you've used and which are left
         - Initial idea was to use Unicode strikthrough combining character, but effect is not that clear
