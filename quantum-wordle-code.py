@@ -487,7 +487,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         print('Select an option by entering the corresponding number:')
         print(f'{classical_attempt_option}: Classical attempt (1 guess)')
         print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
-        print(f'{measure_option}: Measure (collapse) all superpositions')
+        print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
         print(f'{exit_option}: Exit')
         user_choice = safe_input('--> ')
 
