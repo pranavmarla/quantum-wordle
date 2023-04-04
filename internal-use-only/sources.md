@@ -7,3 +7,7 @@
     - Allowed guesses (excluding solutions): https://gist.github.com/cfreshman/d5fb56316158a1575898bba1eed3b5da
 
 - Quantum Tic Tac Toe: Lab 11 (from semester 1 of Qubit by Qubit course)
+
+- Calculating number of bits needed to represent a number in binary:
+    - https://www.exploringbinary.com/number-of-bits-in-a-decimal-integer/
+    - https://www.quora.com/How-many-bits-does-it-take-to-represent-a-number/answer/Cool-Cat-334?ch=10&oid=361012982&share=4d755cc6&srid=RuIR&target_type=answer
