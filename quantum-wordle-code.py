@@ -1,3 +1,4 @@
+from math import floor, log2
 from qiskit import Aer, execute, QuantumCircuit
 from time import sleep
 
@@ -172,31 +173,59 @@ def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHA
     print()
 
 
-#! TODO: Ideally, for a list of size N, this should be able to generate a list index from 0 to N-1. Attempted this prevously, but turned out to be trickier than I thought so sticking to simpler 0/1 random number generator for now
-def random_0_1_generator(quantum_backend=QUANTUM_BACKEND):
-    """Randomly generate either 0 or 1"""
+def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
+    """Generates a random number from 0 to max (inclusive)"""
+
+    # Number of bits (here, qubits) needed to represent a decimal number (here, max) in binary = floor(log_2(max)) + 1
+    # Source: https://www.exploringbinary.com/number-of-bits-in-a-decimal-integer/
+    # Note that this formula does NOT work if max = 0, since log_2(0) is not defined!
+    #
+    # Eg. Let max = 5
+    #       5 (in decimal) = 101 (in binary) -> needs 3 bits to represent it
+    #       log_2(5) = ~2.32
+    #       floor(log_2(5)) = 2
+    #       floor(log_2(5)) + 1 = 2 + 1 = 3
+    #
+    # Eg. Let max = 8
+    #       8 (in decimal) = 1000 (in binary) -> needs 4 bits to represent it
+    #       log_2(8) = 3
+    #       floor(log_2(8)) = 3
+    #       floor(log_2(8)) + 1 = 3 + 1 = 4
+    if max == 0:
+        num_qubits = num_classical_bits = 1
+    else:
+        num_qubits = num_classical_bits = floor(log2(max)) + 1
     
-    num_qubits = num_classical_bits = 1
     random_num_circuit = QuantumCircuit(num_qubits, num_classical_bits)
 
-    qubit_index = classical_bit_index = 0
-    # Put qubit into superposition of 0 and 1
-    random_num_circuit.h(qubit_index)
-    # Measure qubit
-    random_num_circuit.measure(qubit_index, classical_bit_index)
+    qubit_indices = range(num_qubits)
+    classical_bit_indices = range(num_classical_bits)
 
-    # Execute circuit
-    job = execute(random_num_circuit, backend=quantum_backend, shots=1)
-    result = job.result()
-    counts = result.get_counts()
-    # Since we only ran one shot above, we already know that we only have one measured value
-    # Eg. '1'
-    measured_binary_value_string = list(counts.keys())[0]
-    # Eg. 1
-    measured_decimal_value = int(measured_binary_value_string, base=2)
+    # Put all qubits into superposition
+    for qubit_index in qubit_indices:
+        random_num_circuit.h(qubit_index)
 
-    return measured_decimal_value
+    # Measure all qubits
+    random_num_circuit.measure(qubit_indices, classical_bit_indices)
 
+    # NOTE: The above circuit will NOT necessarily respect max!
+    # Eg. If max = 4, it needs 3 qubits to be represented. However, a 3-qubit circuit with all qubits in superposition can produce ANY number from 0 to ((2^3) - 1) = from 0 to 7!
+    # Thus, even though max is 4, our circuit may generate a number greater than 4!
+    # Thus, need to check if that has happened and, if so, keep re-running the circuit until we get a number <= max
+    
+    random_decimal_num = max + 1
+    while random_decimal_num > max:
+        # Execute circuit
+        job = execute(random_num_circuit, backend=quantum_backend, shots=1)
+        result = job.result()
+        counts = result.get_counts()
+        # Since we only ran one shot above, we already know that we only have one measured value
+        # Eg. '101'
+        random_binary_num_string = list(counts.keys())[0]
+        # Eg. 5
+        random_decimal_num = int(random_binary_num_string, base=2)
+    
+    return random_decimal_num
 
 def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
 
@@ -227,7 +256,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     # Randomly select first feedback from feedback_list
     #! NOTE: We assume here that the superposition consists of only 2 guesses, which implies that there are only 2 feedback strings in feedback_list, which implies that the only valid list indices are 0 and 1
     #! TODO: Ideally, this code should be able to handle feedback_list of any size
-    random_feedback_list_index = random_0_1_generator()
+    random_feedback_list_index = random_number_generator(max=1)
     feedback_display_list.append(feedback_list[random_feedback_list_index])
     # If: 
     #   random_feedback_list_index = 0 -> remaining_feedback_list_index = 1
@@ -236,14 +265,15 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
     # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
-    # Note: To avoid accidentally revealing which is the "real" first feedback (corresponding to first guess), we iterate through feedback_display_list instead of the original feedback_list -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
+    # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list.  -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
     # The number of iterations and sleep duration were determined experimentally
+    # Note that at no point does this output loop advance to the next line!
     for _ in range(3):
         for feedback in feedback_display_list:
             print_guess_feedback(feedback, output_prefix=reset_cursor_char)
             sleep(0.3)
     
-    # Ensure that the below, final print of all feedback will overwrite the temporary output above
+    # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
     print(reset_cursor_char, end='')
 
     # Finally, print the feedback strings once separately, above each other
