@@ -1,3 +1,4 @@
+# Note: For some reason, just importing the Qiskit libraries seems to take ~2 seconds and importing the IPython libraries seems to take ~1 second. Thus, to avoid delays when re-running the game, move the code to actually run the game to a separate cell
 from enum import auto, Enum
 from IPython.display import clear_output
 from math import floor, log2
@@ -22,7 +23,7 @@ ANSWERS = ('APPLE',)
 # List of all valid (allowed) guesses, excluding the words already in the answers list
 # Source: https://gist.github.com/cfreshman/d5fb56316158a1575898bba1eed3b5da
 #! DEBUG: Replace with actual list
-ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB', 'GRAZE', 'WEEPY', 'PIETY')
+ALLOWED_GUESSES_EXCLUDING_ANSWERS = ('WEARY', 'KEBAB', 'GRAZE', 'WEEPY', 'PIETY', 'PAPAL')
 
 # The strings that the user needs to enter to select these options
 CLASSICAL_ATTEMPT_OPTION = '1'
@@ -327,6 +328,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     #! NOTE: We assume here that the superposition consists of only 2 guesses, which implies that there are only 2 feedback strings in feedback_list, which implies that the only valid list indices are 0 and 1
     #! TODO: Ideally, this code should be able to handle feedback_list of any size
     random_feedback_list_index = random_number_generator(max=1)
+
     feedback_display_list.append(feedback_list[random_feedback_list_index])
     # If: 
     #   random_feedback_list_index = 0 -> remaining_feedback_list_index = 1
@@ -338,10 +340,11 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list.  -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
     # The number of iterations and sleep duration were determined experimentally
     # Note that at no point does this output loop advance to the next line!
-    for _ in range(3):
-        for feedback in feedback_display_list:
-            print_guess_feedback(feedback, output_prefix=reset_cursor_char)
-            sleep(0.3)
+    #! DEBUG
+    # for _ in range(3):
+    #     for feedback in feedback_display_list:
+    #         print_guess_feedback(feedback, output_prefix=reset_cursor_char)
+    #         sleep(0.3)
     
     # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
     print(reset_cursor_char, end='')
@@ -359,20 +362,25 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
 def print_game_state(attempts_list, game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
     
     # Clear previous output
-    # NOTE: Although the recommendation online is to set `wait` to True, that appears to cause a bug where, although the notebook is waiting for user input, it doesn't actually display a prompt where the user can type the notebook, causing it to just hang indefinitely!
+    # Note: When using clear_output() and asking for user input, there seems to be a bug with the Jupyter notebook (at least when run in IBM Quantum Lab) where, if you run the cell while the bottom of the cell (below which the output is being printed) is off screen, then sometimes the user prompt does not appear in the output, which means the user has no way of supplying the input that the program is waiting for
+    #! TODO: Experiment to see which value of wait is better
+    # clear_output(wait=True)
     clear_output(wait=False)
 
     print('Welcome to Quantum Wordle!')
-    print(f'Can you guess the mystery {word_length}-letter word in {max_attempts} attempts or less?\n')
+    print(f'Can you guess the mystery {word_length}-letter word in {max_attempts} attempts or less?')
 
     for index, attempt in enumerate(attempts_list):
         
         attempt_num = index + 1
         guess_to_feedback_dict = attempt.guess_to_feedback_dict
 
-        if attempt_num != 1:
-            # Add three new lines before every attempt (except the first)
-            print('\n\n\n', end='')
+        #! DEBUG
+        # Add new line before every attempt (except the first)
+        print()
+        # if attempt_num != 1:
+        #     # Add new lines before every attempt (except the first)
+        #     print('\n\n\n', end='')
 
         num_guesses_in_attempt = len(guess_to_feedback_dict)
 
@@ -388,8 +396,8 @@ def print_game_state(attempts_list, game_circuit, word_length: int = WORD_LENGTH
         else:
             print_quantum_attempt(attempt_num, guess_to_feedback_dict)
 
-    #! DEBUG
-    print(game_circuit.draw(output='text', initial_state=True))
+    # #! DEBUG
+    # print(game_circuit.draw(output='text', initial_state=True))
 
 
 def get_guess_feedback(guess_str: str, answer_str: str, word_length: int = WORD_LENGTH, right_guess_feedback_string: str = RIGHT_GUESS_FEEDBACK_STRING) -> str:
@@ -652,7 +660,6 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
         print(f'{exit_option}: Exit')
         user_choice = safe_input('--> ')
-        print()
 
         if user_choice == classical_attempt_option:
 
@@ -703,4 +710,10 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         else:
             print('Invalid choice! Please choose one of the available options')
 
-run_game()
+    # Print final game state after exiting above loop
+    print_game_state(attempts_list, game_circuit)
+    
+    #! TODO: After exiting loop: If any quantum attempts remain, collapse them and print state. Check if user chose to exit
+
+# ! DEBUG
+# run_game()
