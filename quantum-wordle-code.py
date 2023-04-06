@@ -298,6 +298,7 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
 
 
 def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
+    """Prints quantum attempt. Assumed to have two guesses"""
 
     # Number of spaces in below commands determined experimentally
     print(f'Attempt {attempt_num}:{space*6}', end='')
