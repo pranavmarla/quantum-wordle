@@ -659,6 +659,8 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
         print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
         print(f'{exit_option}: Exit')
+        #! DEBUG: Adding delay here seems to solve issue of prompt not appearing
+        sleep(1)
         user_choice = safe_input('--> ')
 
         if user_choice == classical_attempt_option:
