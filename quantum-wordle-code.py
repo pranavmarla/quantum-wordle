@@ -304,7 +304,6 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     print(f'Attempt {attempt_num}:{space*6}', end='')
 
     # Since this is a quantum attempt, we know there are multiple guesses in the dict
-    # Technically, these are view objects, not lists
     guesses = guess_to_feedback_dict.keys()
     feedback_list = list(guess_to_feedback_dict.values())
 
@@ -321,35 +320,37 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
     # Print feedback strings
 
     # Unlike guesses, which are always displayed in order of entry, feedback for a superposition of guesses is intentionally displayed in a RANDOM order
-    # Thus, for simplicity, create a separate list consisting of the same feedback strings as feedback_list, but in random order -- this list will be used only for DISPLAYING the feedback
-    feedback_display_list = []
 
-    #! TODO: This is getting called repeatedly for the same attempt, once every time we print out game state. Probably more efficient to do the RNG only once per attempt
+    # For efficiency, only generate this random order once per quantum attempt -- i.e. if we've already come up with a random display order for a quantum attempt, don't bother doing so again
+    if feedback_display_list is None:
 
-    # Randomly select first feedback from feedback_list
-    #! NOTE: We assume here that the superposition consists of only 2 guesses, which implies that there are only 2 feedback strings in feedback_list, which implies that the only valid list indices are 0 and 1
-    #! TODO: Ideally, this code should be able to handle feedback_list of any size
-    random_feedback_list_index = random_number_generator(max=1)
+        # A separate list consisting of the same feedback strings as feedback_list, but in random order -- this list will be used only for DISPLAYING the feedback
+        feedback_display_list = []
 
-    feedback_display_list.append(feedback_list[random_feedback_list_index])
-    # If: 
-    #   random_feedback_list_index = 0 -> remaining_feedback_list_index = 1
-    #   random_feedback_list_index = 1 -> remaining_feedback_list_index = 0
-    remaining_feedback_list_index = 1 - random_feedback_list_index
-    feedback_display_list.append(feedback_list[remaining_feedback_list_index])
+        # Randomly select first feedback from feedback_list
+        #! NOTE: We assume here that the superposition consists of only 2 guesses, which implies that there are only 2 feedback strings in feedback_list, which implies that the only valid list indices are 0 and 1
+        #! TODO: Ideally, this code should be able to handle feedback_list of any size
+        random_feedback_list_index = random_number_generator(max=1)
 
-    # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
-    # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list.  -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
-    # The number of iterations and sleep duration were determined experimentally
-    # Note that at no point does this output loop advance to the next line!
-    #! DEBUG
+        feedback_display_list.append(feedback_list[random_feedback_list_index])
+        # If: 
+        #   random_feedback_list_index = 0 -> remaining_feedback_list_index = 1
+        #   random_feedback_list_index = 1 -> remaining_feedback_list_index = 0
+        remaining_feedback_list_index = 1 - random_feedback_list_index
+        feedback_display_list.append(feedback_list[remaining_feedback_list_index])
+
+    #! TODO: For now, this seems to cause undesirable forced upward scroll since the output height suddenly gets shorter when it's pausing mid-way to do this animation -- if there's time, try to get this working later
+    # # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
+    # # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list.  -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
+    # # The number of iterations and sleep duration were determined experimentally
+    # # Note that at no point does this output loop advance to the next line!
     # for _ in range(3):
     #     for feedback in feedback_display_list:
     #         print_guess_feedback(feedback, output_prefix=reset_cursor_char)
     #         sleep(0.3)
-    
-    # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
-    print(reset_cursor_char, end='')
+    #
+    # # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
+    # print(reset_cursor_char, end='')
 
     # Finally, print the feedback strings once separately, above each other
     # This is a static way of conveying that the feedback strings are in superposition
