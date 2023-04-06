@@ -80,6 +80,8 @@ class Attempt:
         # Dictionary mapping each guess to colour feedback string indicating its correctness
         # Contains the words guessed by the user in this attempt, in the order that they guessed them in
         self.guess_to_feedback_dict = {}
+        # For quantum attempts (multiple guesses), we intentionally display the guess feedback strings in a random order, so it's not clear which guess each feedback string corresponds to. This list stores the feedback strings in the random order that they will be displayed in
+        self.feedback_display_list = None
 
 
 def safe_input(user_prompt: str = '') -> str:
@@ -297,7 +299,7 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
     return random_decimal_num
 
 
-def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
+def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_list, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
     """Prints quantum attempt. Assumed to have two guesses"""
 
     # Number of spaces in below commands determined experimentally
@@ -361,6 +363,8 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
         print_guess_feedback(feedback)
         print()
 
+    return feedback_display_list
+
 
 def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
     
@@ -395,7 +399,7 @@ def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: in
         
         # Quantum attempt
         else:
-            print_quantum_attempt(attempt_num, guess_to_feedback_dict)
+            attempt.feedback_display_list = print_quantum_attempt(attempt_num, guess_to_feedback_dict, attempt.feedback_display_list)
 
     # #! DEBUG
     # print(game_circuit.draw(output='text', initial_state=True))
