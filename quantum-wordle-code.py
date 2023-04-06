@@ -360,7 +360,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
         print()
 
 
-def print_game_state(attempts_list, game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
+def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
     
     # Clear previous output
     # Experimentally, setting 'wait' to True (which delays clearing old output till new output is available to replace it) seems to be a little smoother visually, since you're less likely to see the flash of blank screen between old output being cleared and new output being printed
