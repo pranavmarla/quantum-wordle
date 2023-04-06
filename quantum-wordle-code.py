@@ -696,6 +696,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
         elif user_choice == measure_option:
             
+            #! TODO: This gets erased by clear_output() in print_game_state()
             print('Measuring all quantum attempts and collapsing them to classical attempts ...')
             # Note that this choice does NOT use up an attempt!
             game_circuit = measure_circuit(game_circuit, attempts_list)
