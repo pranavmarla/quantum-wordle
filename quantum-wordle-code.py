@@ -364,10 +364,8 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHAR,
 def print_game_state(attempts_list, game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
     
     # Clear previous output
-    # Note: When using clear_output() and asking for user input, there seems to be a bug with the Jupyter notebook (at least when run in IBM Quantum Lab) where, if you run the cell while the bottom of the cell (below which the output is being printed) is off screen, then sometimes the user prompt does not appear in the output, which means the user has no way of supplying the input that the program is waiting for
-    #! TODO: Experiment to see which value of wait is better
-    # clear_output(wait=True)
-    clear_output(wait=False)
+    # Experimentally, setting 'wait' to True (which delays clearing old output till new output is available to replace it) seems to be a little smoother visually, since you're less likely to see the flash of blank screen between old output being cleared and new output being printed
+    clear_output(wait=True)
 
     print('Welcome to Quantum Wordle!')
     print(f'Can you guess the mystery {word_length}-letter word in {max_attempts} attempts or less?')
