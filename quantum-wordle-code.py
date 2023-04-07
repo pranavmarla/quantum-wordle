@@ -3,7 +3,6 @@ from enum import auto, Enum
 from IPython.display import clear_output
 from math import floor, log2
 from qiskit import Aer, execute, QuantumCircuit
-import sys
 from time import sleep
 
 
