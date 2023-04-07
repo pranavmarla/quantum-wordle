@@ -366,13 +366,14 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS) -> None:
+def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
     Input:
         attempts_list: List of all attempts, both used and unused
-        word_length:Number of letters that the answer contains and, thus, that every guess has to contain
+        word_length: Number of letters that the answer contains and, thus, that every guess has to contain
         max_attempts: Number of chances that user has to guess the answer
+        attempt_types: Enum containing the various attempt types
 
     Output:
         None
@@ -389,19 +390,17 @@ def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGT
         
         attempt_num = index + 1
         guess_to_feedback_dict = attempt.guess_to_feedback_dict
+        attempt_type = attempt.type
 
-        # Add new line before every attempt (except the first)
+        # Add new line before every attempt
         print()
 
-        #! TODO: Instead of inferring attempt type from number of guesses, directly check attempt_type
-        num_guesses_in_attempt = len(guess_to_feedback_dict)
-
         # User hasn't gotten to this attempt yet
-        if num_guesses_in_attempt < 1:
+        if attempt_type is None:
             print_unused_attempt(attempt_num)
 
         # Classical attempt
-        elif num_guesses_in_attempt == 1:
+        elif attempt_type is attempt_types.CLASSICAL:
             print_classical_attempt(attempt_num,guess_to_feedback_dict)
         
         # Quantum attempt
