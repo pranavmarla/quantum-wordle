@@ -69,3 +69,21 @@
         - Adding a delay (via `sleep()`)
         - Some combination of the kernel exiting improperly (including me calling `sys.exit()`) and having the input prompt be off-screen when I run cell
             - Restarting kernel seems to temporarily resolve this trigger
+    - Assuming that above reoslution (flush) did not fully fix issue, also added delay of 0.2s in addition to flush -- big improvement
+    - Instead of delaying every input, focusing on the user choice input since that's where the issue consistently triggers, not the other inputs
+        - Difference is that this input has a lot of output printed before it
+            - Try replacing multiple small print() with one big print()
+                - If anything, made it worse :(
+            - Remove flush and delay from input function
+                - Put only flush after big output block (before user choice input)
+                    - Didn't seem to have much effect
+                - Removed flush and put sleep after big output block
+                    - Big improvement, but not perfect -- can still trigger bug by repeatedly inputting 3 in user choice input, for example
+                - Remove flush and sleep, and instead modify all the print statements in big output block to flush
+                    - Like when we added only sleep after big output block, big improvement. However:
+                        - Visually looks very choppy -- cell below keeps briefly coming up then going back down
+                        - Still able to eventually trigger bug by choosing measure option over and over again
+                    - Try only flushing last print of output block?
+                        - Terrible, no effect
+                - Try both sleep and then flush after big output block
+                    - Really good! Could not trigger bug, even when scrolling so that cell output is off screen!!
