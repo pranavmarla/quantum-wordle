@@ -701,7 +701,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
     attempt_num = 1
     while True:
 
-        print_game_state(attempts_list, game_circuit)
+        print_game_state(attempts_list)
         
         if attempt_num <= max_attempts:
             # There is still at least one attempt left to use, so retrieve it
@@ -752,7 +752,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
             if guess == answer:
                 # Print game state showing correct answer
-                print_game_state(attempts_list, game_circuit)
+                print_game_state(attempts_list)
                 # Print message
                 print_game_result(True, answer)
                 break
