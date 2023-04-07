@@ -786,7 +786,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Note that this choice does NOT use up an attempt!
 
         elif user_choice == exit_option:
-            print('\nExiting ...')
+            print('Exiting ...')
             # Note: Neither `sys.exit()` nor `exit()` appears to gracefully exit the Jupyter notebook -- instead, they both crash the kernel, so do not use them here!
             break
 
