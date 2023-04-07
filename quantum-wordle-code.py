@@ -622,9 +622,9 @@ def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], 
             qubit_value = int(measured_qubit_values_string[-(attempt.qubit_index + 1)])
             
             # Given a list of multiple guesses associated with this attempt, qubit_value gives us the index of the single guess that we should use going forward (discarding the others)
-            current_guesses: list(str) = list(attempt.guess_to_feedback_dict.keys())
+            current_guess_list = list(attempt.guess_to_feedback_dict.keys())
             # Randomly chosen (via superposition collapse) guess that we will use going forward for this attempt
-            chosen_guess: str = current_guesses[qubit_value]
+            chosen_guess: str = current_guess_list[qubit_value]
             # Feedback associated with randomly chosen guess
             # Note that the feedback is NOT independently chosen -- it is always the one associated with the chosen guess!
             chosen_guess_feedback: str = attempt.guess_to_feedback_dict[chosen_guess]
