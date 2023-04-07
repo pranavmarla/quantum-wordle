@@ -97,6 +97,8 @@ def safe_input(user_prompt: str = '') -> str:
     user_input = None
     # Keep asking user for input until we get valid (non-empty) input
     while not user_input:
+        #! DEBUG
+        sleep(0.2)
         # Flush any pending output before asking for input, to resolve apparent Jupyter notebook bug where input prompt does not appear (seemingly because previous output is printed out of order and overwrites it), so code is stuck waiting for input that user cannot provide
         print(end='', flush=True)
         # Note: input('') appears to be the same as input()
