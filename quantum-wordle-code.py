@@ -275,11 +275,9 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
     
     random_num_circuit = QuantumCircuit(num_qubits, num_classical_bits)
 
-    #! TODO: For efficiency, get rid of this loop by directly passing in range(num_qubits) to circuit.h()
     # Put all qubits into superposition
-    for qubit_index in range(num_qubits):
-        random_num_circuit.h(qubit_index)
-
+    random_num_circuit.h(range(num_qubits))
+    
     # Measure all qubits
     random_num_circuit.measure_all(add_bits=False)
 
