@@ -24,9 +24,10 @@
         - When the board is measured, which can be done by user at any time, all superpositions created so far (rows with two words each) are measured, and each row now only displays 1 word and the feedback for that word -- however, *which* of the two words gets chosen to be the final word for that row is determined by whether the qubit for that row collapsed to either `|0>` (first word) or `|1>` (second word)
 
     - Separately, every time our code needs to make a random choice (randomly pick a solution from the solutions list, randomly choose which of the two words' colour feedback gets displayed first), we make that choice using a separate quantum circuit
-        - Number of qubits needed dependes on the number of choices we're randomly choosing between -- specifcally, it is the number of bits required to encode a binary number from 0 to (num_choices - 1) -- i.e. it is ~log_2(num_choices)  
+        - Number of qubits needed depends on the number of choices we're randomly choosing between -- specifically, it is the number of bits required to encode a binary number from 0 to (num_choices - 1) -- i.e. it is ~log_2(num_choices)  
         Eg. If we need to randomly pick one of 8 choices, we can represent their zero-based indexes (0 - 7) in binary as 000 - 111, which requires 3 bits. Thus, we create a circuit containing 3 qubits, put each qubit in a superposition of `|0>` and `|1>`, and then measure all the qubits -- depending on how each of the three qubits collapses to either `|0>` and `|1>`, we'll get a binary number from 000 - 111, which tells us which of the 8 choices has been chosen.
-        - ALternatively, see if there is an existing Qiskit library that does this for us
+        - Alternatively, see if there is an existing Qiskit library that does this for us
+            - Surprisingly, looks like there isn't!
     
     - Printing out colour feedback for superposition of 2 words:
         - Put words vertically on top of each other
