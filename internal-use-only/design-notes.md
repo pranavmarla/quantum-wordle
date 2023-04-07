@@ -7,6 +7,7 @@
     - When player chooses to measure board, all qubits are measured (only 1 shot)
         - For each qubit that was in superposition, its spot in board is designated `O` or `X` depending on whether the measurement collapsed it to `|0>` or `|1>`
         - If game gets to the end (board is filled up) and there are still un-measured superpositions, they are automatically measured
+        - Regardless of whether user chooses to measure or board automatically measures because game got to the end, it doesn't print any message that it's doing so -- at least, none that is visible before the output is cleared and the measured game board is displayed
     - Note: Uses `from IPython.display import clear_output; clear_output(wait=False)` to replace previous output!
 
 - Wordle:
@@ -61,3 +62,10 @@
                     - It's wrong: Letter background turns black -- never changes again
                     - It's right letter and position: Letter background turns green -- never changes again
                     - It's right letter, but wrong position: Letter background turns yellow. This is the only case where it CAN change again -- if you guess the right position of that letter in a subsequent word, the background colour will change again from yellow to green
+
+- Jupyter input prompt bug:
+    - One trigger seems to be combination of `clear_output()` and `input()`, which I resolved by flushing previous output before calling input
+    - However, there appear to be other triggers that are not fixed:
+        - Adding a delay (via `sleep()`)
+        - Some combination of the kernel exiting improperly (including me calling `sys.exit()`) and having the input prompt be off-screen when I run cell
+            - Restarting kernel seems to temporarily resolve this trigger
