@@ -87,3 +87,4 @@
                         - Terrible, no effect
                 - Try both sleep and then flush after big output block
                     - Really good! Could not trigger bug, even when scrolling so that cell output is off screen!!
+                    - Visually, the 0.2s delay seems notiecable though -- experiment with shorter delays to find sweet spot (?)
