@@ -97,10 +97,10 @@ def safe_input(user_prompt: str = '') -> str:
     user_input = None
     # Keep asking user for input until we get valid (non-empty) input
     while not user_input:
-        #! DEBUG
-        sleep(0.2)
-        # Flush any pending output before asking for input, to resolve apparent Jupyter notebook bug where input prompt does not appear (seemingly because previous output is printed out of order and overwrites it), so code is stuck waiting for input that user cannot provide
-        print(end='', flush=True)
+        # #! DEBUG
+        # sleep(0.2)
+        # # Flush any pending output before asking for input, to resolve apparent Jupyter notebook bug where input prompt does not appear (seemingly because previous output is printed out of order and overwrites it), so code is stuck waiting for input that user cannot provide
+        # print(end='', flush=True)
         # Note: input('') appears to be the same as input()
         user_input = input(user_prompt)
         # Remove any extra spaces from user input
@@ -713,11 +713,23 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Eg. Attempt 1 is located at index 0
             current_attempt = attempts_list[attempt_num - 1]
             # User can choose what to do as long as they haven't run out of attempts
-            print('\nSelect an option by entering the corresponding number:')
-            print(f'{classical_attempt_option}: Classical attempt (1 guess)')
-            print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
-            print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
-            print(f'{exit_option}: Exit')
+
+            #! DEBUG
+
+            # print('\nSelect an option by entering the corresponding number:')
+            # print(f'{classical_attempt_option}: Classical attempt (1 guess)')
+            # print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
+            # print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
+            # print(f'{exit_option}: Exit')
+
+            print(
+                    '\nSelect an option by entering the corresponding number:\n'
+                    f'{classical_attempt_option}: Classical attempt (1 guess)\n'
+                    f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)\n'
+                    f'{measure_option}: Measure all quantum attempts (collapse to classical)\n'
+                    f'{exit_option}: Exit'
+                )
+            
             # After printing above options, print error message if user previously made an invalid choice
             if user_entered_invalid_choice:
                 user_entered_invalid_choice = False
