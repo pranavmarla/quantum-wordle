@@ -720,7 +720,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             print(f'{exit_option}: Exit')
 
             #! DEBUG
-            print(end='', flush=True)
+            # print(end='', flush=True)
             
             # After printing above options, print error message if user previously made an invalid choice
             if user_entered_invalid_choice:
