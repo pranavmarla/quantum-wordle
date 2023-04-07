@@ -69,10 +69,7 @@ class AttemptType(Enum):
 class Attempt:
     """Stores attempt data"""
 
-    def __init__(self, attempt_num: int, qubit_index: int, attempt_type: AttemptType = None):
-        #! TODO: Check if we ever actually use this field -- if not, remove it
-        # Keeps track of which attempt this is (starting at 1)
-        self.num: int = attempt_num
+    def __init__(self, qubit_index: int, attempt_type: AttemptType = None):
         # Keeps track of which qubit is used to encode which of this attempt's guesses should be used (starting at 0)
         self.qubit_index: int = qubit_index
         # Tells us whether this is a classical attempt or a quantum attempt
@@ -191,7 +188,7 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
     for i in range(max_attempts):
         qubit_index = i
         attempt_num = i + 1
-        attempts_list.append(Attempt(attempt_num, qubit_index))
+        attempts_list.append(Attempt(qubit_index))
 
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
     game_circuit = create_circuit(max_attempts)
