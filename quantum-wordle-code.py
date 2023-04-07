@@ -714,7 +714,10 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             sys.exit()
 
         else:
+            #! TODO: This gets erased by clear_output() in print_game_state()
             print('Invalid choice! Please choose one of the available options')
+            #! DEBUG
+            sleep(1)
 
     # Print final game state after exiting above loop
     print_game_state(attempts_list, game_circuit)
