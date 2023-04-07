@@ -137,7 +137,7 @@ def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCL
         answers: List of possible answers
 
     Output:
-        Returns True/False, depending on whether or not the guess is considered valid
+        True/False, depending on whether or not the guess is considered valid
     """
     if (guess in allowed_guesses_excluding_answers) or (guess in answers):
         return True
@@ -272,6 +272,7 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
     
     random_num_circuit = QuantumCircuit(num_qubits, num_classical_bits)
 
+    #! TODO: For efficiency, get rid of this loop by directly passing in range(num_qubits) to circuit.h()
     # Put all qubits into superposition
     for qubit_index in range(num_qubits):
         random_num_circuit.h(qubit_index)
@@ -366,7 +367,17 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: int = WORD_LENGTH, max_attempts=MAX_ATTEMPTS):
+def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS) -> None:
+    """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
+    
+    Input:
+        attempts_list: List of all attempts, both used and unused
+        word_length:Number of letters that the answer contains and, thus, that every guess has to contain
+        max_attempts: Number of chances that user has to guess the answer
+
+    Output:
+        None
+    """
     
     # Clear previous output
     # Experimentally, setting 'wait' to True (which delays clearing old output till new output is available to replace it) seems to be a little smoother visually, since you're less likely to see the flash of blank screen between old output being cleared and new output being printed
@@ -380,13 +391,10 @@ def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: in
         attempt_num = index + 1
         guess_to_feedback_dict = attempt.guess_to_feedback_dict
 
-        #! DEBUG
         # Add new line before every attempt (except the first)
         print()
-        # if attempt_num != 1:
-        #     # Add new lines before every attempt (except the first)
-        #     print('\n\n\n', end='')
 
+        #! TODO: Instead of inferring attempt type from number of guesses, directly check attempt_type
         num_guesses_in_attempt = len(guess_to_feedback_dict)
 
         # User hasn't gotten to this attempt yet
@@ -589,18 +597,27 @@ def test_get_guess_feedback():
 
 
 def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircuit, quantum_backend=QUANTUM_BACKEND) -> None:
-    """Encode quantum attempt on underlying quantum circuit, by putting corresponding qubit in superposition"""
+    """Encode quantum attempt on underlying quantum circuit. Assumes that the quantum attempt consists of only 2 guesses"""
 
     #! Note: This assumes that the quantum attempt consists of only 2 guesses!
     # To indicate that we are using two guesses (guess #0 and guess #1) at the same time in this quantum attempt, put the corresponding qubit into a superposition of the |0> and |1> states
     game_circuit.h(current_attempt.qubit_index)
 
 
-def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType):
-    """Measure all qubits, collapsing any that are in superposition to a classical value. Update the corresponding attempts from quantum to classical"""
+def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> QuantumCircuit:
+    """Measure all qubits, collapsing any that are in superposition to a classical value. Update the corresponding attempts from quantum to classical
+    
+    Input:
+
+    
+    Output:
+        New game circuit, reflecting game state post-measurement
+    """
     
     # Add measurement
     game_circuit.measure_all(add_bits=False)
+
+    # #! DEBUG
     # game_circuit.draw()
 
     # Execute circuit
@@ -608,7 +625,7 @@ def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], 
     job = execute(game_circuit, backend=backend, shots=1)
     result = job.result()
     counts = result.get_counts(game_circuit)
-    # Single string containing the values (0/1) of every qubit in the circuit after measurement
+    # Since we only ran one shot above, we already know that we only have one measured value. Specifically, that value is a single string containing the values (0/1) of every qubit in the circuit after measurement
     # Eg. '001101', where the the rightmost char ('1') refers to qubit 0 (attempt 1) and the leftmost char ('0') refers to qubit 5 (attempt 6)
     measured_qubit_values_string = list(counts.keys())[0]
 
@@ -618,67 +635,126 @@ def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], 
         if attempt.type is attempt_types.QUANTUM:
 
             # Get value that corresponding qubit collapsed to after measurement
-            # Note that, for example, qubit 0 will correspond to the last (rightmost) char in measured_qubit_values_string -- i.e. the char at index -1
+            # Note that, for example, qubit 0 will correspond to the last (rightmost) char in measured_qubit_values_string -- i.e. the char at index `-(0 + 1)` = `-1`
             qubit_value = int(measured_qubit_values_string[-(attempt.qubit_index + 1)])
             
-            # Given a list of multiple guesses associated with this attempt, qubit_value gives us the index of the single guess that we should use going forward (discarding the others)
+            # Given a list of multiple guesses currently associated with this attempt, qubit_value gives us the index of the single guess that we should use going forward (discarding the others)
             current_guess_list = list(attempt.guess_to_feedback_dict.keys())
-            # Randomly chosen (via superposition collapse) guess that we will use going forward for this attempt
+            # Randomly chosen (via superposition collapse) guess that, going forward, will be the ONLY guess associated with this attempt
             chosen_guess: str = current_guess_list[qubit_value]
             # Feedback associated with randomly chosen guess
-            # Note that the feedback is NOT independently chosen -- it is always the one associated with the chosen guess!
+            # Note that chosen_guess_feedback is NOT independently chosen -- it is always the feedback associated with chosen_guess!
             chosen_guess_feedback: str = attempt.guess_to_feedback_dict[chosen_guess]
-            # Rewrite existing guess_to_feedback dict for this attempt to consist of just this new guess
+            # Overwrite existing guess_to_feedback dict for this attempt to consist of just this new guess
             attempt.guess_to_feedback_dict = {chosen_guess: chosen_guess_feedback}
 
             # Finally, update the attempt type, now that:
             #   The corresponding qubit's superposition has been collapsed to a single classical value
-            #   There is only one guess associated with this attempt
+            #   The list of multiple guesses associated with this attempt has been reduced to a single guess
             attempt.type = attempt_types.CLASSICAL
 
-    # At this point, all quantum attempts have been converted to classical attempts and their associated guess list has been reduced to a single guess
+    # At this point, all quantum attempts have been converted to classical attempts and each of their associated guess lists has been reduced to a single guess
 
-    # Since there doesn't seem to be a way to just continue a previous circuit execution, every execution starts voer from the beginning. If we continue reusing the same circuit for all executions, that means it will have multiple redundant measurements , we will be putting qubits that represent FORMERLY quantum attempts back into superposition needlessly and we will have to worry about potential complications caused by those unnecessary superpositions collapsing to a different value this time.
-    # Thus, instead, for simplicity, we just create a brand new circuit for use next time -- formerly quantum attempts that are now classical attempts will remain classical (their qubits will not have any gates applied to them)
-    game_circuit = create_circuit(num_attempts)
+    # There doesn't seem to be a way to just continue a previous circuit execution -- instead, every execution starts over from the very beginning. This means that, if we continue reusing the same circuit for all executions, it will have multiple measurements (where all but the latest are redundant), we will be putting qubits that represent FORMERLY quantum attempts back into superposition needlessly and we will have to worry about potential complications caused by those unnecessary superpositions (that we already measured in a previous circuit execution) collapsing to a different value this time.
+    # Thus, instead, for simplicity, we just create a brand new circuit for execution next time -- formerly quantum attempts that are now classical attempts will remain classical in this new circuit (their qubits will not have any gates applied to them)
+    new_game_circuit = create_circuit(num_attempts)
+    return new_game_circuit
+
+
+def did_user_guess_answer(attempts_list: list[Attempt], answer):
+    """Given a list of attempts, check if any of the guesses made by the user in those attempts was correct (i.e. matched the answer)
     
-    return game_circuit
+    Input:
+        attempts_list: List of attempts made by the user. Assumes all attempts in the list are classical
+
+    Output:
+        True/False, depending on whether any of the user's guesses was correct or not
+    """
+
+    for attempt in attempts_list:
+        # Since all attempts in the list are assumed to be classical, we can also assume that they only have 1 guess each
+        guess = list(attempt.guess_to_feedback_dict.keys())[0]
+        if guess == answer:
+            return True
+        
+    # If we get to this point, it means none of the attempts were successful
+    return False
 
 
-def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType):
+def print_game_result(user_guessed_answer, answer):
+    """Print either a success or failure message, depending on whether the user correctly guessed the answer or not
+    
+    Input:
+        user_guessed_answer: Boolean (True/False) indicating whether the user correctly guessed the answer or not
+        answer: The correct answer
+    """
+    if user_guessed_answer:
+        print(f'\nCongratulations!! You correctly guessed that the mystery word was "{answer}"!')
+    else:
+        print(f'\nThe mystery word was "{answer}" -- better luck next time!')
+
+
+def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType):
 
     answer, attempts_list, game_circuit = setup_game()
     
-    keep_playing = True
+    # Keeps track of whether the user entered an invalid choice in the previous iteration of the below loop
+    user_entered_invalid_choice = False
     # Number of next available attempt
     attempt_num = 1
-    while keep_playing and (attempt_num <= max_attempts):
+    while True:
 
         print_game_state(attempts_list, game_circuit)
         
-        # keep_playing = False
-        current_attempt = attempts_list[attempt_num - 1]
+        if attempt_num <= max_attempts:
+            # There is still at least one attempt left to use, so retrieve it
+            # Eg. Attempt 1 is located at index 0
+            current_attempt = attempts_list[attempt_num - 1]
+            # User can choose what to do as long as they haven't run out of attempts
+            print('\nSelect an option by entering the corresponding number:')
+            print(f'{classical_attempt_option}: Classical attempt (1 guess)')
+            print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
+            print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
+            print(f'{exit_option}: Exit')
+            # After printing above options, print error message if user previously made an invalid choice
+            if user_entered_invalid_choice:
+                user_entered_invalid_choice = False
+                print('\nInvalid choice! Please choose one of the available options')
+            user_choice = safe_input('--> ')
 
-        print('\nSelect an option by entering the corresponding number:')
-        print(f'{classical_attempt_option}: Classical attempt (1 guess)')
-        print(f'{quantum_attempt_option}: Quantum attempt (superposition of 2 guesses)')
-        print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
-        print(f'{exit_option}: Exit')
-        user_choice = safe_input('--> ')
-
+        else:
+            # At this point, user has used up all attempts
+            # Reset to avoid confusion from previous value of user choice
+            user_choice = None
+            # If any of the attempts are still quantum (i.e. are still in superposition), measure them automatically
+            for attempt in attempts_list:
+                if attempt.type is attempt_types.QUANTUM:
+                    user_choice = measure_option
+            # None of the attempts are still quantum
+            if user_choice is None:
+                # Check if the user guessed the answer in any of the attempts
+                # This includes the following scenarios, for each attempt:
+                #   - The user originally made a classical attempt, containing one guess, and that guess was correct
+                #   - The user originally made a qauntum attempt, containing 2 guesses, one of which was correct, and after we measured the quantum attempt, the single guess it collapsed to happened to be the correct one
+                user_guessed_answer = did_user_guess_answer(attempts_list, answer)
+                # Print either success or failure message
+                print_game_result(user_guessed_answer, answer)
+                break
+        
         if user_choice == classical_attempt_option:
 
             current_attempt.type = attempt_types.CLASSICAL
 
             guess = safe_guess_input('Enter guess: ')
-            if guess != answer:
-                # # If the guess is not correct, keep playing
-                # keep_playing = True
-                
-                current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
-            else:
-                #! TODO: Print state again to show green squares, then print congratulation message, then quit
-                pass
+            # Even if the guess is correct, we want to get and store its feedback so we can display it
+            current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+            if guess == answer:
+                # Print game state showing correct answer
+                print_game_state(attempts_list, game_circuit)
+                # Print message
+                print_game_result(True, answer)
+                break
+            # If the guess is not correct, keep playing
             
             # Current attempt has been used up
             attempt_num += 1
@@ -687,40 +763,48 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
             current_attempt.type = attempt_types.QUANTUM
 
-            # Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty has to WHICH guess is correct), we keep playing
-            # keep_playing = True
-
             # guess_num goes from 1 to num_guesses_in_superposition
             for guess_num in range(1, num_guesses_in_superposition + 1):
+                #! TODO: If user enters same word twice, it effectively ends up like a classical attempt (only 1 guess stored) BUT since we never checked that word for correctness the game doesn't stop even if that word is correct and shows up with all green squares!
                 guess = safe_guess_input(f'Enter guess {guess_num}: ')
+                # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we keep playing
                 current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
             
             encode_quantum_attempt(current_attempt, game_circuit)
-            
             # Current attempt has been used up
             attempt_num += 1
 
         elif user_choice == measure_option:
-            
-            #! TODO: This gets erased by clear_output() in print_game_state()
-            print('Measuring all quantum attempts and collapsing them to classical attempts ...')
-            # Note that this choice does NOT use up an attempt!
             game_circuit = measure_circuit(game_circuit, attempts_list)
+            # Note that this choice does NOT use up an attempt!
 
-        #! TODO: Looks like there is no graceful way to exit Jupyter notebook from code -- keep this till I'm done testing, then remove it
         elif user_choice == exit_option:
-            print('Exiting ...')
-            keep_playing = False
-            sys.exit()
+            print('\nExiting ...')
+            # Note: Neither `sys.exit()` nor `exit()` appears to gracefully exit the Jupyter notebook -- instead, they both crash the kernel, so do not use them here!
+            break
 
+        # Invalid choice
         else:
-            #! TODO: This gets erased by clear_output() in print_game_state()
-            print('Invalid choice! Please choose one of the available options')
+            user_entered_invalid_choice = True
 
-    # Print final game state after exiting above loop
-    print_game_state(attempts_list, game_circuit)
+    # # We exited loop because user ran out of attempts
+    # if attempt_num == max_attempts:
+    #     # Since game state is only printed when we ENTER above loop, it doesn't get printed after last attempt
+    #     # This, print it again to show game state after last attempt
+    #     print_game_state(attempts_list, game_circuit)
     
-    #! TODO: After exiting loop: If any quantum attempts remain, collapse them and print state. Check if user chose to exit
+    #     # If user has run out of attempts but any of them are still quantum (i.e. in superposition), measure them automatically
+    #     for attempt in attempts_list:
+    #         if attempt.type is attempt_types.QUANTUM:
+    #             # Don't need to check every attempt -- as soon as we find one quantum attempt, measure the entire circuit (which will collapse ALL remaining quantum attempts)
+    #             measure_circuit(game_circuit, attempts_list)
+    #             break
+        
+    #     # Print final game state, after collapsing all quantum states to classicals states
+    #     print_game_state(attempts_list, game_circuit)
+    
+
+    # #! TODO: After exiting loop: If any quantum attempts remain, collapse them and print state. Check if user chose to exit
 
 # ! DEBUG
 # run_game()
