@@ -107,7 +107,7 @@ def safe_input(user_prompt: str = '') -> str:
         user_input = user_input.strip()
         # user_input is an empty string
         if not user_input:
-            print('Please enter valid (non-empty) input!\n')
+            print('Please enter valid (non-empty) input!')
     
     # For consistency, if the input is a word, ensure it is in upper case
     if user_input.isalpha():
