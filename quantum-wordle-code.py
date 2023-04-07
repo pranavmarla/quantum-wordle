@@ -71,6 +71,7 @@ class Attempt:
     """Stores attempt data"""
 
     def __init__(self, attempt_num: int, qubit_index: int, attempt_type: AttemptType = None):
+        #! TODO: Check if we ever actually use this field -- if not, remove it
         # Keeps track of which attempt this is (starting at 1)
         self.num: int = attempt_num
         # Keeps track of which qubit is used to encode which of this attempt's guesses should be used (starting at 0)
@@ -344,6 +345,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         remaining_feedback_list_index = 1 - random_feedback_list_index
         feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
+
     #! TODO: For now, this seems to cause undesirable forced upward scroll since the output height suddenly gets shorter when it's pausing mid-way to do this animation -- if there's time, try to get this working later
     # # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
     # # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list.  -- this ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
@@ -357,6 +359,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     # # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
     # print(reset_cursor_char, end='')
 
+
     # Finally, print the feedback strings once separately, above each other
     # This is a static way of conveying that the feedback strings are in superposition
     for feedback_index, feedback in enumerate(feedback_display_list):
@@ -369,7 +372,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS) -> None:
+def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
     Input:
@@ -410,9 +413,6 @@ def print_game_state(attempts_list: list[Attempt], game_circuit, word_length: in
         # Quantum attempt
         else:
             attempt.feedback_display_list = print_quantum_attempt(attempt_num, guess_to_feedback_dict, attempt.feedback_display_list)
-
-    # #! DEBUG
-    # print(game_circuit.draw(output='text', initial_state=True))
 
 
 def get_guess_feedback(guess_str: str, answer_str: str, word_length: int = WORD_LENGTH, right_guess_feedback_string: str = RIGHT_GUESS_FEEDBACK_STRING) -> str:
@@ -619,9 +619,6 @@ def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], 
     # Add measurement
     game_circuit.measure_all(add_bits=False)
 
-    # #! DEBUG
-    # game_circuit.draw()
-
     # Execute circuit
     backend = Aer.get_backend('qasm_simulator')
     job = execute(game_circuit, backend=backend, shots=1)
@@ -793,25 +790,6 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         # Invalid choice
         else:
             user_entered_invalid_choice = True
-
-    # # We exited loop because user ran out of attempts
-    # if attempt_num == max_attempts:
-    #     # Since game state is only printed when we ENTER above loop, it doesn't get printed after last attempt
-    #     # This, print it again to show game state after last attempt
-    #     print_game_state(attempts_list, game_circuit)
-    
-    #     # If user has run out of attempts but any of them are still quantum (i.e. in superposition), measure them automatically
-    #     for attempt in attempts_list:
-    #         if attempt.type is attempt_types.QUANTUM:
-    #             # Don't need to check every attempt -- as soon as we find one quantum attempt, measure the entire circuit (which will collapse ALL remaining quantum attempts)
-    #             measure_circuit(game_circuit, attempts_list)
-    #             break
-        
-    #     # Print final game state, after collapsing all quantum states to classicals states
-    #     print_game_state(attempts_list, game_circuit)
-    
-
-    # #! TODO: After exiting loop: If any quantum attempts remain, collapse them and print state. Check if user chose to exit
 
 # ! DEBUG
 # run_game()
