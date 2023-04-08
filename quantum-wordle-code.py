@@ -648,17 +648,17 @@ def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], 
     return new_game_circuit
 
 
-def did_user_guess_answer(attempts_list: list[Attempt], answer):
-    """Given a list of attempts, check if any of the guesses made by the user in those attempts was correct (i.e. matched the answer)
+def did_user_guess_answer(classical_attempts_list: list[Attempt], answer):
+    """Given a list of classical attempts, check if any of the guesses made by the user in those attempts was correct (i.e. matched the answer)
     
     Input:
-        attempts_list: List of attempts made by the user. Assumes all attempts in the list are classical
+        classical_attempts_list: List of attempts made by the user. Assumes all attempts in the list are classical
 
     Output:
         True/False, depending on whether any of the user's guesses was correct or not
     """
 
-    for attempt in attempts_list:
+    for attempt in classical_attempts_list:
         # Since all attempts in the list are assumed to be classical, we can also assume that they only have 1 guess each
         guess = list(attempt.guess_to_feedback_dict.keys())[0]
         if guess == answer:
