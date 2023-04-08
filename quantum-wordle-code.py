@@ -788,9 +788,14 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
             # guess_num goes from 1 to num_guesses_in_superposition
             for guess_num in range(1, num_guesses_in_superposition + 1):
-                #! TODO: If user enters same word twice, it effectively ends up like a classical attempt (only 1 guess stored) BUT since we never checked that word for correctness the game doesn't stop even if that word is correct and shows up with all green squares!
-                guess = safe_guess_input(f'Enter guess {guess_num}: ')
-                current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+                # If user guesses the same word multiple times in their quantum attempt, that causes issues since the rest of the code reasonably assumes that a quantum attempt always has num_guesses_in_superposition DIFFERENT guesses -- thus, do not accept duplicate guesses (in the same quantum attempt -- it's okay if different attempts have the same guess)
+                while True:
+                    guess = safe_guess_input(f'Enter guess {guess_num}: ')
+                    if guess in current_attempt.guess_to_feedback_dict:
+                        print('Duplicate guess! Please enter a different word')
+                    else:
+                        current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+                        break
                 # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we do NOT stop the game
             
             encode_quantum_attempt(current_attempt, game_circuit)
@@ -804,7 +809,6 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             
             # Now that all quantum attempts made so far have been collapsed to classical attempts, check to see if any of them happened to have collapsed to the right answer
             # Since game isn't over yet, only print game result and exit if one of the user's quantum attempts collapsed to the correct answer (i.e. if user guessed correct answer early) -- if not, continue game
-
             previous_attempt_index = next_available_attempt_index - 1
             # Only check the list of attempts made SO FAR (index 0 to previous_attempt_index) -- no point in checking unused attempts. Also, did_user_guess_answer() only accepts classical attempts, not unused attempts
             if did_user_guess_answer(attempts_list[:(previous_attempt_index+1)], answer):
