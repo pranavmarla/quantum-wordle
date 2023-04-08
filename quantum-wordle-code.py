@@ -381,9 +381,9 @@ def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGT
     print('Welcome to Quantum Wordle!')
     print(f'Can you guess the mystery {word_length}-letter word in {max_attempts} attempts or less?')
 
-    for index, attempt in enumerate(attempts_list):
+    for attempt_index, attempt in enumerate(attempts_list):
         
-        attempt_num = index + 1
+        attempt_num = attempt_index + 1
         guess_to_feedback_dict = attempt.guess_to_feedback_dict
         attempt_type = attempt.type
 
