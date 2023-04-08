@@ -595,7 +595,7 @@ def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircui
 
 
 def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> QuantumCircuit:
-    """Measure all qubits, collapsing any that are in superposition to a classical value. Update the corresponding attempts from quantum to classical
+    """Measure all qubits, collapsing any that are in superposition to a classical value. Update any of the corresponding attempts that are quantum to classical
     
     Input:
 
