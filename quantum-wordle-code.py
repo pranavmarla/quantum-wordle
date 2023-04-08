@@ -47,7 +47,6 @@ NO_GUESS_STRING = WORD_LENGTH * '_'
 # "Blank" colour feedback string used to convey that we don't have any feedback yet
 NO_FEEDBACK_STRING = WORD_LENGTH * NO_FEEDBACK_COLOUR
 
-
 # Char representing one space
 SPACE_CHAR = ' '
 
@@ -815,7 +814,6 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
                 print_success_message(answer)
                 # Exit early
                 break
-
 
         elif user_choice == exit_option:
             print('Exiting ...')
