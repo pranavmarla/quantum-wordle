@@ -352,7 +352,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list. This ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
         # The number of iterations and sleep duration were determined experimentally
         # Note that at no point does this output loop advance to the next line!
-        for _ in range(3):
+        for _ in range(2):
             for feedback in feedback_display_list:
                 print_guess_feedback(feedback, output_prefix=reset_cursor_char)
                 sleep(0.3)
