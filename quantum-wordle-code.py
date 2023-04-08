@@ -785,6 +785,8 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         elif user_choice == measure_option:
             game_circuit = measure_circuit(game_circuit, attempts_list)
             # Note that this choice does NOT use up an attempt!
+            # Now that all quantum attempts made so far have been collapsed to classical attempts, check to see if any of them happened to have collapsed to the right answer
+            # Since game isn't over yet, only print game result and exit if one of the user's quantum attempts collapsed to the correct answer (i.e. if user guessed correct answer early) -- if not, continue game
             if did_user_guess_answer(attempts_list, answer):
                 # Show game state after measurement/collapse
                 print_game_state(attempts_list)
