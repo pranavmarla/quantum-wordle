@@ -772,6 +772,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         elif user_choice == measure_option:
             game_circuit = measure_circuit(game_circuit, attempts_list)
             # Note that this choice does NOT use up an attempt!
+            #! TODO: Aftr user measures quantum attempt, currently we do not stop game even if one of the attempts collapsed to right answer! Check for right answer here!
 
         elif user_choice == exit_option:
             print('Exiting ...')
