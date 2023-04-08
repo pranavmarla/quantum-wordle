@@ -66,6 +66,7 @@
 
         - Wordle shows not only which letters are left (available), but also which are right/wrong. Since I have less space in my Jupyter notebook output, consider only showing the letters that are left. This is because then we only have to display letters -- if we also want to indicate which letters are right/wrong, we need extra rows of colour squares below each row of letters
             - Note: I have browser zoom set to 125% for IBM Quantum Lab -- try with default 100%, since that is what average person will probably be using
+                - Animation renders well when zoom is reduced to 100%, but only on larger screen. On smaller (13 inch) screen, there is still too much jerking around to make it worth it
 
 - Jupyter input prompt bug:
     - One trigger seems to be combination of `clear_output()` and `input()`, which I resolved by flushing previous output before calling input
