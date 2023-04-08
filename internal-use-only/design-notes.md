@@ -98,3 +98,9 @@
                 - Try both sleep and then flush after big output block
                     - Really good! Could not trigger bug, even when scrolling so that cell output is off screen!!
                     - Visually, the 0.2s delay seems notiecable though -- experiment with shorter delays to find sweet spot (?)
+
+TODO:
+    - Display the following disclaimers:
+        - Regarding platform: Only tested on IBM Quantum Lab
+        - Regarding input prompt bug: Not caused by my code, will require them to stop kernel and restart
+        - Display settings: Due to large output size, to ensure all of it can be seen without scrolling, recommend reducing browser zoom to 100% and using a larger monitor. Otherwise, Jupyter notebook might forcefully jerk you around (scroll up/down)
