@@ -700,6 +700,9 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
     """
 
     answer, attempts_list, game_circuit = setup_game()
+
+    #! DEBUG
+    answer = 'APPLE'
     
     # Keeps track of whether the user entered an invalid choice in the previous iteration of the below loop
     user_entered_invalid_choice = False
