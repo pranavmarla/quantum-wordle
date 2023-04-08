@@ -196,14 +196,14 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
 
 
 def print_guess(guess_string):
-    """Print a single guess word, letter by letter. Does not print a newline at the end."""
+    """Print a single guess word, letter by letter. Does not print a newline at the end"""
     for char in guess_string:
         # Pad each character of guess to be two spaces, to align with each character (coloured square) of the colour feedback string which seems to take up two spaces
         print(f'{char:>2}', end='')
 
 
 def print_guess_feedback(feedback_string, space=SPACE_CHAR, output_prefix=''):
-    """Print string of coloured squares, where each coloured square indicates the correctness of the corresponding letter of the guess. Does not print a newline at the end."""
+    """Print string of coloured squares, where each coloured square indicates the correctness of the corresponding letter of the guess. Does not print a newline at the end"""
     print(f'{output_prefix}{space*23}{feedback_string}', end='')
 
 
@@ -333,7 +333,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         remaining_feedback_list_index = 1 - random_feedback_list_index
         feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
-    # Finally, print the feedback strings once separately, above each other
+    # Print the feedback strings such that they are above each other
     # This is a static way of conveying that the feedback strings are in superposition
     for feedback_index, feedback in enumerate(feedback_display_list):
         # Print separator above every feedback string, except the first (0th index)
