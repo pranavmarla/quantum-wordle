@@ -94,10 +94,6 @@ def safe_input(user_prompt: str = '') -> str:
     user_input = None
     # Keep asking user for input until we get valid (non-empty) input
     while not user_input:
-        # #! DEBUG
-        # sleep(0.2)
-        # # Flush any pending output before asking for input, to resolve apparent Jupyter notebook bug where input prompt does not appear (seemingly because previous output is printed out of order and overwrites it), so code is stuck waiting for input that user cannot provide
-        # print(end='', flush=True)
         # Note: input('') appears to be the same as input()
         user_input = input(user_prompt)
         # Remove any extra spaces from user input
@@ -709,7 +705,9 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             print(f'{measure_option}: Measure all quantum attempts (collapse to classical)')
             print(f'{exit_option}: Exit')
 
-            #! DEBUG
+            # There appears to be a longstanding Jupyter notebook bug where input prompt occasionally does not appear (seemingly because previous output is printed out of order and overwrites it), which means that the code is stuck waiting for input that user cannot provide. In particular, appears to only occur at this point in code, possibly because of large quantity of output being printed above right before asking for input below, repeatedly (in a loop)
+            # After lot of research and experimentation, the combination of adding a delay and flushing pending output before asking for input seems to prevent that bug from being triggered
+            # Experimentally, a delay of 0.2s seems to be pretty reliable
             sleep(0.2)
             print(end='', flush=True)
             
