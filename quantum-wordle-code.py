@@ -183,7 +183,6 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
     attempts_list = []
     for i in range(max_attempts):
         qubit_index = i
-        attempt_num = i + 1
         attempts_list.append(Attempt(qubit_index))
 
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
@@ -587,7 +586,7 @@ def test_get_guess_feedback():
 # test_get_guess_feedback()
 
 
-def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircuit, quantum_backend=QUANTUM_BACKEND) -> None:
+def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircuit) -> None:
     """Encode quantum attempt on underlying quantum circuit. Assumes that the quantum attempt consists of only 2 guesses"""
 
     #! Note: This assumes that the quantum attempt consists of only 2 guesses!
