@@ -140,7 +140,7 @@ def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCL
         return False
 
 
-def choose_answer(answer_list=ANSWERS):
+def choose_answer(answer_list=ANSWERS) -> str:
     """Randomly chooses a word from the list of all possible answers to be the answer for this run of the game"""
     answer_index = random_number_generator(max=(len(answer_list) - 1))
     answer = answer_list[answer_index]
@@ -669,15 +669,27 @@ def did_user_guess_answer(attempts_list: list[Attempt], answer):
     return False
 
 
-def print_game_result(user_guessed_answer, answer):
+def print_success_message(answer: str) -> None:
+    """Print success message
+    
+    Input:
+        answer: The correct answer
+    """
+    print(f'\nCongratulations!! You correctly guessed that the mystery word was "{answer}"!')
+
+
+def print_game_result(user_guessed_answer: bool, answer: str) -> None:
     """Print either a success or failure message, depending on whether the user correctly guessed the answer or not
     
     Input:
         user_guessed_answer: Boolean (True/False) indicating whether the user correctly guessed the answer or not
         answer: The correct answer
+
+    Output:
+        None
     """
     if user_guessed_answer:
-        print(f'\nCongratulations!! You correctly guessed that the mystery word was "{answer}"!')
+        print_success_message(answer)
     else:
         print(f'\nThe mystery word was "{answer}" -- better luck next time!')
 
@@ -774,6 +786,14 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             game_circuit = measure_circuit(game_circuit, attempts_list)
             # Note that this choice does NOT use up an attempt!
             #! TODO: Aftr user measures quantum attempt, currently we do not stop game even if one of the attempts collapsed to right answer! Check for right answer here!
+            if did_user_guess_answer(attempts_list, answer):
+                # Show game state after measurement/collapse
+                print_game_state(attempts_list)
+                # Print success message
+                print_success_message(answer)
+                # Exit early
+                break
+
 
         elif user_choice == exit_option:
             print('Exiting ...')
