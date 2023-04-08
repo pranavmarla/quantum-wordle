@@ -346,8 +346,7 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         remaining_feedback_list_index = 1 - random_feedback_list_index
         feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
-    # Do a final print of the feedback strings such that they are above each other
-    # This is a static way of conveying that the feedback strings are in superposition
+    # Print the feedback strings above each other (vertical orientation, as opposed to the horizontal orientation of the guesses), to convey that the feedback strings are in superposition and that we don't know which feedback string corresponds to which guess
     for feedback_index, feedback in enumerate(feedback_display_list):
         # Print separator above every feedback string, except the first (0th index)
         if feedback_index != 0:
