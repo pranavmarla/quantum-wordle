@@ -79,10 +79,14 @@
                     - Didn't seem to have much effect
                 - Removed flush and put sleep after big output block
                     - Big improvement, but not perfect -- can still trigger bug by repeatedly inputting 3 in user choice input, for example
+                        - In retrospect, this might not be the best test, since it seems like this is more testing whether the browser can render input prompt faster than I can hit Enter + 3, rather than testing whether it renders an input prompt at all
+                        - Instead, just run the program a few times and, each time, use the program normally and see if the input prompt vanishes, since that's what the average user will be doing
+                        - Alternatively, scrolling up so that code cell is at bottom of screen and output is off screen and THEN running code cell seems to also be a good way to trigger missing input prompt bug
                 - Remove flush and sleep, and instead modify all the print statements in big output block to flush
                     - Like when we added only sleep after big output block, big improvement. However:
                         - Visually looks very choppy -- cell below keeps briefly coming up then going back down
                         - Still able to eventually trigger bug by choosing measure option over and over again
+                            - Again, seems like this is testing the wrong thing in retrospect
                     - Try only flushing last print of output block?
                         - Terrible, no effect
                 - Try both sleep and then flush after big output block
