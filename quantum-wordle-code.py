@@ -822,5 +822,5 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         else:
             user_entered_invalid_choice = True
 
-# ! DEBUG
+#! DEBUG
 # run_game()
