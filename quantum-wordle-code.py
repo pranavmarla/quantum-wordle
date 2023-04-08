@@ -334,7 +334,6 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
         #! TODO: For now, this seems to cause undesirable forced upward scroll since the output height suddenly gets shorter when it's pausing mid-way to do this animation -- if there's time, try to get this working later
-        #! TODO: Undesirable forced upward scroll issue mentioned above no longer seems to be present (possibly because now we have a cell below). However, new issue is that, every time we print game state, this animation gets run from scratch for every quantum attempt (note that it always 'collapses' the same way though), making it quite tedious for the user to sit through -- only run it the very first time per quantum attempt
         # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
         # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list. This ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
         # The number of iterations and sleep duration were determined experimentally
