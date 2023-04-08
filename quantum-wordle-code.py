@@ -725,6 +725,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             for attempt in attempts_list:
                 if attempt.type is attempt_types.QUANTUM:
                     user_choice = measure_option
+                    break
             # None of the attempts are still quantum
             if user_choice is None:
                 # Check if the user guessed the answer in any of the attempts
