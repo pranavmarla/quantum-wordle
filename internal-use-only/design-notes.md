@@ -40,14 +40,15 @@
 
     - Answer selection:
         - Classical Wordle takes answer from answer list in order
+            - Actually, since Nov 7, 2022, there is no hardcoded answer list -- the NYT manually picks an answer every day. There is still a guess list though
         - Classical Wordle only selects 1 answer per day
         - Since mine is a demonstration, it should NOT be tied to the same word per day. Also, since my answer list (unlike original one from Wordle) is in alphabetical order, no fun if I go in order -- thus, pick a new answer at random every time the game is executed
 
     - Exiting game:
         We stop running game only under following circumstances:
             - It's a CLASSICAL attempt and the guess is right (i.e. guess = answer)
-            - User chose to measure all quantum attempts and one of them collapsed to classical attempt with the right guess
-            - All 6 attempts have been used up, any quantum attempts have been measured and resulting classical attempts did not have right guess
+            - User chose to measure all quantum attempts made so far and one of them collapsed to classical attempt with the right guess
+            - All 6 attempts have been used up
             - User chose to exit
     
     - Displaying available letters
@@ -62,6 +63,9 @@
                     - It's wrong: Letter background turns black -- never changes again
                     - It's right letter and position: Letter background turns green -- never changes again
                     - It's right letter, but wrong position: Letter background turns yellow. This is the only case where it CAN change again -- if you guess the right position of that letter in a subsequent word, the background colour will change again from yellow to green
+
+        - Wordle shows not only which letters are left (available), but also which are right/wrong. Since I have less space in my Jupyter notebook output, consider only showing the letters that are left. This is because then we only have to display letters -- if we also want to indicate which letters are right/wrong, we need extra rows of colour squares below each row of letters
+            - Note: I have browser zoom set to 125% for IBM Quantum Lab -- try with default 100%, since that is what average person will probably be using
 
 - Jupyter input prompt bug:
     - One trigger seems to be combination of `clear_output()` and `input()`, which I resolved by flushing previous output before calling input
