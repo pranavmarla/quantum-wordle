@@ -693,22 +693,34 @@ def print_game_result(user_guessed_answer: bool, answer: str) -> None:
         print(f'\nThe mystery word was "{answer}" -- better luck next time!')
 
 
-def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType):
+def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_option=QUANTUM_ATTEMPT_OPTION, measure_option=MEASURE_OPTION, exit_option=EXIT_OPTION, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
+    """Run game
+    
+    Input:
+        max_attempts: Maximum number of attempts that user has to guess the answer
+    
+    Output:
+        None
+    """
 
     answer, attempts_list, game_circuit = setup_game()
     
     # Keeps track of whether the user entered an invalid choice in the previous iteration of the below loop
     user_entered_invalid_choice = False
-    # Number of next available attempt
-    attempt_num = 1
+
+    # Index of the final attempt
+    final_attempt_index = max_attempts - 1
+    # Index of next/first available attempt
+    # Eg. Attempt 1 is located at index 0
+    next_available_attempt_index = 0
+
     while True:
 
         print_game_state(attempts_list)
         
-        if attempt_num <= max_attempts:
-            # There is still at least one attempt left to use, so retrieve it
-            # Eg. Attempt 1 is located at index 0
-            current_attempt = attempts_list[attempt_num - 1]
+        if next_available_attempt_index <= final_attempt_index:
+            # There is still at least one attempt available to use, so retrieve it
+            next_available_attempt = attempts_list[next_available_attempt_index]
             # User can choose what to do as long as they haven't run out of attempts
             print('\nSelect an option by entering the corresponding number:')
             print(f'{classical_attempt_option}: Classical attempt (1 guess)')
@@ -750,23 +762,28 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         
         if user_choice == classical_attempt_option:
 
+            # Take next available attempt off the list and use it up -- will not be available for next iteration
+            current_attempt = next_available_attempt
+            next_available_attempt_index += 1
+
             current_attempt.type = attempt_types.CLASSICAL
 
             guess = safe_guess_input('Enter guess: ')
             # Even if the guess is correct, we want to get and store its feedback so we can display it
             current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+            # Stop game if the guess is correct
             if guess == answer:
                 # Print game state showing correct answer
                 print_game_state(attempts_list)
                 # Print message
                 print_game_result(True, answer)
                 break
-            # If the guess is not correct, keep playing
-            
-            # Current attempt has been used up
-            attempt_num += 1
         
         elif user_choice == quantum_attempt_option:
+
+            # Take next available attempt off the list and use it up -- will not be available for next iteration
+            current_attempt = next_available_attempt
+            next_available_attempt_index += 1
 
             current_attempt.type = attempt_types.QUANTUM
 
@@ -774,12 +791,10 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             for guess_num in range(1, num_guesses_in_superposition + 1):
                 #! TODO: If user enters same word twice, it effectively ends up like a classical attempt (only 1 guess stored) BUT since we never checked that word for correctness the game doesn't stop even if that word is correct and shows up with all green squares!
                 guess = safe_guess_input(f'Enter guess {guess_num}: ')
-                # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we keep playing
                 current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+                # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we do NOT stop the game
             
             encode_quantum_attempt(current_attempt, game_circuit)
-            # Current attempt has been used up
-            attempt_num += 1
 
         elif user_choice == measure_option:
             game_circuit = measure_circuit(game_circuit, attempts_list)
