@@ -787,6 +787,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Note that this choice does NOT use up an attempt!
             # Now that all quantum attempts made so far have been collapsed to classical attempts, check to see if any of them happened to have collapsed to the right answer
             # Since game isn't over yet, only print game result and exit if one of the user's quantum attempts collapsed to the correct answer (i.e. if user guessed correct answer early) -- if not, continue game
+            #! TODO: If collapsed states do NOT have correct answer, below func will eventually get to an UNUNSED attempt that it treats like classical, which breaks when it tries to get guess from empty dict. Only send list of attempts made SO FAR -- might mean restoring attempt_num field so we can get latest attempt_num (this should also handle scenario where we've come to this point because all attempts are used up (but still quantum) and thus attempt_num > max_attempts!)
             if did_user_guess_answer(attempts_list, answer):
                 # Show game state after measurement/collapse
                 print_game_state(attempts_list)
