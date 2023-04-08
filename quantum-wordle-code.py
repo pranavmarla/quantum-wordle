@@ -346,7 +346,21 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
         remaining_feedback_list_index = 1 - random_feedback_list_index
         feedback_display_list.append(feedback_list[remaining_feedback_list_index])
 
-    # Print the feedback strings such that they are above each other
+        # Create a temporary animation to convey that the feedback strings are in superposition
+        # To visually indicate that the feedback strings are in superposition, repeatedly print them on top of each other (i.e. overwriting previous feedback string)
+        # Note: For users with browser zoom greater than 100% (eg. 125%), this animation might lead to a bad user experience in the Jupyter notebook, due to too much jerking around (forced scrolling up/down)!
+        # Note: To avoid accidentally revealing which is the "real" first feedback (i.e. corresponding to the first guess), we iterate through feedback_display_list instead of the original feedback_list. This ensures that the very first feedback we display is the one that was randomly chosen to be displayed first
+        # The number of iterations and sleep duration were determined experimentally
+        # Note that at no point does this output loop advance to the next line!
+        for _ in range(3):
+            for feedback in feedback_display_list:
+                print_guess_feedback(feedback, output_prefix=reset_cursor_char)
+                sleep(0.3)
+        # Ensure that the below, final print of all feedback will overwrite the temporary output above (on the current line)
+        print(reset_cursor_char, end='')
+
+
+    # Do a final print of the feedback strings such that they are above each other
     # This is a static way of conveying that the feedback strings are in superposition
     for feedback_index, feedback in enumerate(feedback_display_list):
         # Print separator above every feedback string, except the first (0th index)
