@@ -3,7 +3,7 @@
 ## **Overview**
 
 This is a fully functioning, playable implementation of a quantum game.
-Inspired by the Quantum Tic Tac Toe game introduced in semester 1 lab 11, this is also a quantum spin on a classical game -- specifically, as the name implies, a quantum spin on the game Wordle.
+Inspired by the Quantum Tic Tac Toe game introduced in semester 1 lab 11 of this course, this is also a quantum spin on a classical game -- specifically, as the name implies, a quantum spin on the game Wordle.
 
 ### **(Classical) Wordle**
 Developed by Josh Wardle as a gift for his partner before going viral upon its public release in Oct 2021 and eventually being bought by the New York Times for more than $1 million, [Wordle](https://www.nytimes.com/games/wordle/index.html) is a word game that challenges you to guess a mystery five-letter word in six attempts.
