@@ -249,7 +249,7 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
 
     # Create list of available letters
     # Note that, to be intuitiveily obvious which letter is missing (used), the letters are in alphabetical order, NOT "keyboard order" (the order in which letters are displayed on a computer keyboard)
-    available_letters = [
+    letter_usage_list = [
         'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
             'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
                 'Z', 'X', 'C', 'V', 'B', 'N', 'M'
@@ -258,7 +258,7 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
     game_circuit = create_circuit(max_attempts)
 
-    return answer, attempts_list, available_letters, game_circuit
+    return answer, attempts_list, letter_usage_list, game_circuit
 
 
 def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCLUDING_ANSWERS, answers=ANSWERS):
@@ -376,57 +376,57 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def print_subset_available_letters(available_letters, start_index, stop_index):
-    """Print a subset of the available letters, from start_index (inclusive) to stop_index (inclusive)"""
+def print_subset_letter_usage(letter_usage_list, start_index, stop_index):
+    """Print a subset of the letter usage list, from start_index (inclusive) to stop_index (inclusive)"""
     for index in range(start_index, stop_index+1):
-        print(f'{available_letters[index]:>2}', end='')
+        print(f'{letter_usage_list[index]:>2}', end='')
 
 
-def print_available_letters(available_letters, space=SPACE_CHAR):
-    """Display all the available letters (i.e. the letters that have not yet been used in any guess)"""
-
-    print('\nAvailable Letters:', end='')
-
+def print_letter_usage(letter_usage_list, space=SPACE_CHAR):
+    """Display all the letters, indicating which have been used so far (in a guess) and which haven't"""
+    
+    print('\nUNUSED / used', end='')
     # Print first 10 letters
-    print(space, end='')
-    print_subset_available_letters(available_letters, 0, 9)
+    print(f'{space*6}', end='')
+    print_subset_letter_usage(letter_usage_list, 0, 9)
     print()
     
+    print(f'{space*2}Letters:', end='')
     # Print next 9 letters
-    print(f'{space*20}', end='')
-    print_subset_available_letters(available_letters, 10, 18)
+    print(f'{space*10}', end='')
+    print_subset_letter_usage(letter_usage_list, 10, 18)
     print()
 
     # Print last 7 letters
     print(f'{space*21}', end='')
-    print_subset_available_letters(available_letters, 19, 25)
+    print_subset_letter_usage(letter_usage_list, 19, 25)
     print()
 
 
-def update_available_letters(guess: str, available_letters: list[str]) -> list[str]:
-    """Given a guess and a list of available letters, remove the letters used in the guess from the list of available letters
+def update_letter_usage(guess: str, letter_usage_list: list[str]) -> list[str]:
+    """Given a guess and a list of all letters, update the list to visually indicate which of the letters have been used in the guess
 
     Input:
         guess
-        available_letters
+        letter_usage_list
 
     Output:
-        Updated list of available letters
+        Updated letter usage list
     """
     for letter in guess:
-        if letter in available_letters:
-            # Note: To preserve output spacing and position, to make it visually obvious which letter has been used, do not actually REMOVE letter from available letters list -- instead, just replace it with an empty string
-            letter_index = available_letters.index(letter)
-            available_letters[letter_index] = ''
-    return available_letters
+        if letter in letter_usage_list:
+            # Visually distinguish the used letters
+            letter_index = letter_usage_list.index(letter)
+            letter_usage_list[letter_index] = letter_usage_list[letter_index].lower()
+    return letter_usage_list
 
 
-def print_game_state(attempts_list: list[Attempt], available_letters, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
+def print_game_state(attempts_list: list[Attempt], letter_usage_list, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
     Input:
         attempts_list: List of all attempts, both used and unused
-        available_letters: List of all unused letters
+        letter_usage_list: List of all unused letters
         word_length: Number of letters that the answer contains and, thus, that every guess has to contain
         max_attempts: Number of chances that user has to guess the answer
         attempt_types: Enum containing the various attempt types
@@ -463,8 +463,8 @@ def print_game_state(attempts_list: list[Attempt], available_letters, word_lengt
         else:
             attempt.feedback_display_list = print_quantum_attempt(attempt_num, guess_to_feedback_dict, attempt.feedback_display_list)
 
-    # Print available letters
-    print_available_letters(available_letters)
+    # Print letter usage
+    print_letter_usage(letter_usage_list)
 
 
 def safe_input(user_prompt: str = '') -> str:
@@ -747,10 +747,10 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         None
     """
 
-    answer, attempts_list, available_letters, game_circuit = setup_game()
+    answer, attempts_list, letter_usage_list, game_circuit = setup_game()
 
-    #! DEBUG
-    answer = 'APPLE'
+    # #! DEBUG
+    # answer = 'APPLE'
     
     # Keeps track of whether the user entered an invalid choice in the previous iteration of the below loop
     user_entered_invalid_choice = False
@@ -763,7 +763,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
     while True:
 
-        print_game_state(attempts_list, available_letters)
+        print_game_state(attempts_list, letter_usage_list)
         
         if next_available_attempt_index <= final_attempt_index:
             # There is still at least one attempt available to use, so retrieve it
@@ -818,12 +818,12 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             guess = safe_guess_input('Enter guess: ')
             # Even if the guess is correct, we want to get and store its feedback so we can display it
             current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
-            available_letters = update_available_letters(guess, available_letters)
+            letter_usage_list = update_letter_usage(guess, letter_usage_list)
 
             # Stop game if the guess is correct
             if guess == answer:
                 # Print game state showing correct answer
-                print_game_state(attempts_list, available_letters)
+                print_game_state(attempts_list, letter_usage_list)
                 # Print message
                 print_game_result(True, answer)
                 break
@@ -845,7 +845,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
                         print('Duplicate guess! Please enter a different word')
                     else:
                         current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
-                        available_letters = update_available_letters(guess, available_letters)
+                        letter_usage_list = update_letter_usage(guess, letter_usage_list)
                         break
                 # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we do NOT stop the game
             
@@ -864,7 +864,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Only check the list of attempts made SO FAR (index 0 to previous_attempt_index) -- no point in checking unused attempts. Also, did_user_guess_answer() only accepts classical attempts, not unused attempts
             if did_user_guess_answer(attempts_list[:(previous_attempt_index+1)], answer):
                 # Show game state after measurement/collapse
-                print_game_state(attempts_list, available_letters)
+                print_game_state(attempts_list, letter_usage_list)
                 # Print success message
                 print_success_message(answer)
                 # Exit early
