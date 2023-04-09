@@ -81,63 +81,72 @@ class Attempt:
         self.feedback_display_list = None
 
 
-def safe_input(user_prompt: str = '') -> str:
-    """Safely take in user input, making sure to accept only valid input
+def create_circuit(num_qubits: int, num_classical_bits: int = None) -> QuantumCircuit:
+    """Creates a quantum circuit
     
     Input:
-        user_prompt: Optional string to be printed as a prompt for user prior to reading in their input
+        num_qubits: Number of qubits
+        num_classical_bits: Number of classical bits. Defaults to num_qubits
 
     Output:
-        Returns valid user input
+        Quantum circuit
     """
 
-    user_input = None
-    # Keep asking user for input until we get valid (non-empty) input
-    while not user_input:
-        # Note: input('') appears to be the same as input()
-        user_input = input(user_prompt)
-        # Remove any extra spaces from user input
-        user_input = user_input.strip()
-        # user_input is an empty string
-        if not user_input:
-            print('Please enter valid (non-empty) input!')
+    if num_classical_bits is None:
+        num_classical_bits = num_qubits
     
-    # For consistency, if the input is a word, ensure it is in upper case
-    if user_input.isalpha():
-        user_input = user_input.upper()
-    
-    return user_input
+    return QuantumCircuit(num_qubits, num_classical_bits)
 
 
-def safe_guess_input(user_prompt='', allowed_word_length=WORD_LENGTH):
-    """Safely take in guess supplied by user, returning only when the user has entered a valid guess"""
-    
-    received_valid_guess = False
-    while not received_valid_guess:
-        guess = safe_input(user_prompt)
-        if (len(guess) == allowed_word_length) and is_guess_valid(guess):
-            received_valid_guess = True
-        else:
-            print('Guess is invalid!')
-    
-    return guess
+def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
+    """Generates a random number from 0 to max (inclusive)"""
 
-
-def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCLUDING_ANSWERS, answers=ANSWERS):
-    """Check if guess input by user is valid (allowed)
-    
-    Input:
-        guess: Guess word entered by user
-        allowed_guesses_excluding_answers: List of allowed guesses, excluding words that are already in the answers list
-        answers: List of possible answers
-
-    Output:
-        True/False, depending on whether or not the guess is considered valid
-    """
-    if (guess in allowed_guesses_excluding_answers) or (guess in answers):
-        return True
+    # Number of bits (here, qubits) needed to represent a decimal number (here, max) in binary = floor(log_2(max)) + 1
+    # Source: https://www.exploringbinary.com/number-of-bits-in-a-decimal-integer/
+    # Note that this formula does NOT work if max = 0, since log_2(0) is not defined!
+    #
+    # Eg. Let max = 5
+    #       5 (in decimal) = 101 (in binary) -> needs 3 bits to represent it
+    #       log_2(5) = ~2.32
+    #       floor(log_2(5)) = 2
+    #       floor(log_2(5)) + 1 = 2 + 1 = 3
+    #
+    # Eg. Let max = 8
+    #       8 (in decimal) = 1000 (in binary) -> needs 4 bits to represent it
+    #       log_2(8) = 3
+    #       floor(log_2(8)) = 3
+    #       floor(log_2(8)) + 1 = 3 + 1 = 4
+    if max == 0:
+        num_qubits = 1
     else:
-        return False
+        num_qubits = floor(log2(max)) + 1
+    
+    random_num_circuit = create_circuit(num_qubits)
+
+    # Put all qubits into superposition
+    random_num_circuit.h(range(num_qubits))
+    
+    # Measure all qubits
+    random_num_circuit.measure_all(add_bits=False)
+
+    # NOTE: The above circuit will NOT necessarily respect max!
+    # Eg. If max = 4, it needs 3 qubits to be represented. However, a 3-qubit circuit with all qubits in superposition can produce ANY number from 0 to ((2^3) - 1) = from 0 to 7!
+    # Thus, even though max is 4, our circuit may generate a number greater than 4!
+    # Thus, need to check if that has happened and, if so, keep re-running the circuit until we get a number <= max
+    
+    random_decimal_num = max + 1
+    while random_decimal_num > max:
+        # Execute circuit
+        job = execute(random_num_circuit, backend=quantum_backend, shots=1)
+        result = job.result()
+        counts = result.get_counts(random_num_circuit)
+        # Since we only ran one shot above, we already know that we only have one measured value
+        # Eg. '101'
+        random_binary_num_string = list(counts.keys())[0]
+        # Eg. 5
+        random_decimal_num = int(random_binary_num_string, base=2)
+    
+    return random_decimal_num
 
 
 def choose_answer(answer_list=ANSWERS) -> str:
@@ -156,21 +165,65 @@ def choose_answer(answer_list=ANSWERS) -> str:
     return answer
 
 
-def create_circuit(num_qubits: int, num_classical_bits: int = None) -> QuantumCircuit:
-    """Creates a quantum circuit
+def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircuit) -> None:
+    """Encode quantum attempt on underlying quantum circuit. Assumes that the quantum attempt consists of only 2 guesses"""
+
+    # To indicate that we are using two guesses (guess #0 and guess #1) at the same time in this quantum attempt, put the corresponding qubit into a superposition of the |0> and |1> states
+    game_circuit.h(current_attempt.qubit_index)
+
+
+def measure_game_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> QuantumCircuit:
+    """Measure all qubits in game circuit, collapsing any that are in superposition to a classical value. Update any of the corresponding attempts that are quantum to classical
     
     Input:
-        num_qubits: Number of qubits
-        num_classical_bits: Number of classical bits. Defaults to num_qubits
 
-    Output:
-        Quantum circuit
-    """
-
-    if num_classical_bits is None:
-        num_classical_bits = num_qubits
     
-    return QuantumCircuit(num_qubits, num_classical_bits)
+    Output:
+        New game circuit, reflecting game state post-measurement
+    """
+    
+    # Add measurement
+    game_circuit.measure_all(add_bits=False)
+
+    # Execute circuit
+    backend = Aer.get_backend('qasm_simulator')
+    job = execute(game_circuit, backend=backend, shots=1)
+    result = job.result()
+    counts = result.get_counts(game_circuit)
+    # Since we only ran one shot above, we already know that we only have one measured value. Specifically, that value is a single string containing the values (0/1) of every qubit in the circuit after measurement
+    # Eg. '001101', where the the rightmost char ('1') refers to qubit 0 (attempt 1) and the leftmost char ('0') refers to qubit 5 (attempt 6)
+    measured_qubit_values_string = list(counts.keys())[0]
+
+    # Although we measured all qubits, we really only care about the qubits that were in superposition (i.e. the qubits that correspond to quantum attempts)
+    # The qubits corresponding to classical attempts had no gates applied to them and, thus, should still be in their default |0> state
+    for attempt in attempts_list:
+        if attempt.type is attempt_types.QUANTUM:
+
+            # Get value that corresponding qubit collapsed to after measurement
+            # Note that, for example, qubit 0 will correspond to the last (rightmost) char in measured_qubit_values_string -- i.e. the char at index `-(0 + 1)` = `-1`
+            qubit_value = int(measured_qubit_values_string[-(attempt.qubit_index + 1)])
+            
+            # Given a list of multiple guesses currently associated with this attempt, qubit_value gives us the index of the single guess that we should use going forward (discarding the others)
+            current_guess_list = list(attempt.guess_to_feedback_dict.keys())
+            # Randomly chosen (via superposition collapse) guess that, going forward, will be the ONLY guess associated with this attempt
+            chosen_guess: str = current_guess_list[qubit_value]
+            # Feedback associated with randomly chosen guess
+            # Note that chosen_guess_feedback is NOT independently chosen -- it is always the feedback associated with chosen_guess!
+            chosen_guess_feedback: str = attempt.guess_to_feedback_dict[chosen_guess]
+            # Overwrite existing guess_to_feedback dict for this attempt to consist of just this new guess
+            attempt.guess_to_feedback_dict = {chosen_guess: chosen_guess_feedback}
+
+            # Finally, update the attempt type, now that:
+            #   The corresponding qubit's superposition has been collapsed to a single classical value
+            #   The list of multiple guesses associated with this attempt has been reduced to a single guess
+            attempt.type = attempt_types.CLASSICAL
+
+    # At this point, all quantum attempts have been converted to classical attempts and each of their associated guess lists has been reduced to a single guess
+
+    # There doesn't seem to be a way to just continue a previous circuit execution -- instead, every execution starts over from the very beginning. This means that, if we continue reusing the same circuit for all executions, it will have multiple measurements (where all but the latest are redundant), we will be putting qubits that represent FORMERLY quantum attempts back into superposition needlessly and we will have to worry about potential complications caused by those unnecessary superpositions (that we already measured in a previous circuit execution) collapsing to a different value this time.
+    # Thus, instead, for simplicity, we just create a brand new circuit for execution next time -- formerly quantum attempts that are now classical attempts will remain classical in this new circuit (their qubits will not have any gates applied to them)
+    new_game_circuit = create_circuit(num_attempts)
+    return new_game_circuit
 
 
 def setup_game(max_attempts: int = MAX_ATTEMPTS):
@@ -208,9 +261,21 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
     return answer, attempts_list, available_letters, game_circuit
 
 
-# def print_same_line(output_string):
-#     """Print output without automatically adding a newline at the end"""
-#     print(foutput_string, end='')
+def is_guess_valid(guess, allowed_guesses_excluding_answers=ALLOWED_GUESSES_EXCLUDING_ANSWERS, answers=ANSWERS):
+    """Check if guess input by user is valid (allowed)
+    
+    Input:
+        guess: Guess word entered by user
+        allowed_guesses_excluding_answers: List of allowed guesses, excluding words that are already in the answers list
+        answers: List of possible answers
+
+    Output:
+        True/False, depending on whether or not the guess is considered valid
+    """
+    if (guess in allowed_guesses_excluding_answers) or (guess in answers):
+        return True
+    else:
+        return False
 
 
 def print_guess(guess_string):
@@ -256,57 +321,6 @@ def print_classical_attempt(attempt_num, guess_to_feedback_dict, space=SPACE_CHA
     # Print feedback
     print_guess_feedback(feedback)
     print()
-
-
-def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
-    """Generates a random number from 0 to max (inclusive)"""
-
-    # Number of bits (here, qubits) needed to represent a decimal number (here, max) in binary = floor(log_2(max)) + 1
-    # Source: https://www.exploringbinary.com/number-of-bits-in-a-decimal-integer/
-    # Note that this formula does NOT work if max = 0, since log_2(0) is not defined!
-    #
-    # Eg. Let max = 5
-    #       5 (in decimal) = 101 (in binary) -> needs 3 bits to represent it
-    #       log_2(5) = ~2.32
-    #       floor(log_2(5)) = 2
-    #       floor(log_2(5)) + 1 = 2 + 1 = 3
-    #
-    # Eg. Let max = 8
-    #       8 (in decimal) = 1000 (in binary) -> needs 4 bits to represent it
-    #       log_2(8) = 3
-    #       floor(log_2(8)) = 3
-    #       floor(log_2(8)) + 1 = 3 + 1 = 4
-    if max == 0:
-        num_qubits = num_classical_bits = 1
-    else:
-        num_qubits = num_classical_bits = floor(log2(max)) + 1
-    
-    random_num_circuit = QuantumCircuit(num_qubits, num_classical_bits)
-
-    # Put all qubits into superposition
-    random_num_circuit.h(range(num_qubits))
-    
-    # Measure all qubits
-    random_num_circuit.measure_all(add_bits=False)
-
-    # NOTE: The above circuit will NOT necessarily respect max!
-    # Eg. If max = 4, it needs 3 qubits to be represented. However, a 3-qubit circuit with all qubits in superposition can produce ANY number from 0 to ((2^3) - 1) = from 0 to 7!
-    # Thus, even though max is 4, our circuit may generate a number greater than 4!
-    # Thus, need to check if that has happened and, if so, keep re-running the circuit until we get a number <= max
-    
-    random_decimal_num = max + 1
-    while random_decimal_num > max:
-        # Execute circuit
-        job = execute(random_num_circuit, backend=quantum_backend, shots=1)
-        result = job.result()
-        counts = result.get_counts(random_num_circuit)
-        # Since we only ran one shot above, we already know that we only have one measured value
-        # Eg. '101'
-        random_binary_num_string = list(counts.keys())[0]
-        # Eg. 5
-        random_decimal_num = int(random_binary_num_string, base=2)
-    
-    return random_decimal_num
 
 
 def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_list, space=SPACE_CHAR):
@@ -362,24 +376,6 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def update_available_letters(guess: str, available_letters: list[str]) -> list[str]:
-    """Given a guess and a list of available letters, remove the letters used in the guess from the list of available letters
-
-    Input:
-        guess
-        available_letters
-
-    Output:
-        Updated list of available letters
-    """
-    for letter in guess:
-        if letter in available_letters:
-            # Note: To preserve output spacing and position, to make it visually obvious which letter has been used, do not actually REMOVE letter from available letters list -- instead, just replace it with an empty string
-            letter_index = available_letters.index(letter)
-            available_letters[letter_index] = ''
-    return available_letters
-
-
 def print_subset_available_letters(available_letters, start_index, stop_index):
     """Print a subset of the available letters, from start_index (inclusive) to stop_index (inclusive)"""
     for index in range(start_index, stop_index+1):
@@ -405,6 +401,24 @@ def print_available_letters(available_letters, space=SPACE_CHAR):
     print(f'{space*21}', end='')
     print_subset_available_letters(available_letters, 19, 25)
     print()
+
+
+def update_available_letters(guess: str, available_letters: list[str]) -> list[str]:
+    """Given a guess and a list of available letters, remove the letters used in the guess from the list of available letters
+
+    Input:
+        guess
+        available_letters
+
+    Output:
+        Updated list of available letters
+    """
+    for letter in guess:
+        if letter in available_letters:
+            # Note: To preserve output spacing and position, to make it visually obvious which letter has been used, do not actually REMOVE letter from available letters list -- instead, just replace it with an empty string
+            letter_index = available_letters.index(letter)
+            available_letters[letter_index] = ''
+    return available_letters
 
 
 def print_game_state(attempts_list: list[Attempt], available_letters, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
@@ -449,9 +463,50 @@ def print_game_state(attempts_list: list[Attempt], available_letters, word_lengt
         else:
             attempt.feedback_display_list = print_quantum_attempt(attempt_num, guess_to_feedback_dict, attempt.feedback_display_list)
 
-    #! DEBUG
     # Print available letters
     print_available_letters(available_letters)
+
+
+def safe_input(user_prompt: str = '') -> str:
+    """Safely take in user input, making sure to accept only valid input
+    
+    Input:
+        user_prompt: Optional string to be printed as a prompt for user prior to reading in their input
+
+    Output:
+        Returns valid user input
+    """
+
+    user_input = None
+    # Keep asking user for input until we get valid (non-empty) input
+    while not user_input:
+        # Note: input('') appears to be the same as input()
+        user_input = input(user_prompt)
+        # Remove any extra spaces from user input
+        user_input = user_input.strip()
+        # user_input is an empty string
+        if not user_input:
+            print('Please enter valid (non-empty) input!')
+    
+    # For consistency, if the input is a word, ensure it is in upper case
+    if user_input.isalpha():
+        user_input = user_input.upper()
+    
+    return user_input
+
+
+def safe_guess_input(user_prompt='', allowed_word_length=WORD_LENGTH) -> str:
+    """Safely take in guess supplied by user, returning only when the user has entered a valid guess"""
+    
+    received_valid_guess = False
+    while not received_valid_guess:
+        guess = safe_input(user_prompt)
+        if (len(guess) == allowed_word_length) and is_guess_valid(guess):
+            received_valid_guess = True
+        else:
+            print('Guess is invalid!')
+    
+    return guess
 
 
 def get_guess_feedback(guess_str: str, answer_str: str, word_length: int = WORD_LENGTH, right_guess_feedback_string: str = RIGHT_GUESS_FEEDBACK_STRING) -> str:
@@ -637,67 +692,6 @@ def test_get_guess_feedback():
 # test_get_guess_feedback()
 
 
-def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircuit) -> None:
-    """Encode quantum attempt on underlying quantum circuit. Assumes that the quantum attempt consists of only 2 guesses"""
-
-    # To indicate that we are using two guesses (guess #0 and guess #1) at the same time in this quantum attempt, put the corresponding qubit into a superposition of the |0> and |1> states
-    game_circuit.h(current_attempt.qubit_index)
-
-
-def measure_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> QuantumCircuit:
-    """Measure all qubits, collapsing any that are in superposition to a classical value. Update any of the corresponding attempts that are quantum to classical
-    
-    Input:
-
-    
-    Output:
-        New game circuit, reflecting game state post-measurement
-    """
-    
-    # Add measurement
-    game_circuit.measure_all(add_bits=False)
-
-    # Execute circuit
-    backend = Aer.get_backend('qasm_simulator')
-    job = execute(game_circuit, backend=backend, shots=1)
-    result = job.result()
-    counts = result.get_counts(game_circuit)
-    # Since we only ran one shot above, we already know that we only have one measured value. Specifically, that value is a single string containing the values (0/1) of every qubit in the circuit after measurement
-    # Eg. '001101', where the the rightmost char ('1') refers to qubit 0 (attempt 1) and the leftmost char ('0') refers to qubit 5 (attempt 6)
-    measured_qubit_values_string = list(counts.keys())[0]
-
-    # Although we measured all qubits, we really only care about the qubits that were in superposition (i.e. the qubits that correspond to quantum attempts)
-    # The qubits corresponding to classical attempts had no gates applied to them and, thus, should still be in their default |0> state
-    for attempt in attempts_list:
-        if attempt.type is attempt_types.QUANTUM:
-
-            # Get value that corresponding qubit collapsed to after measurement
-            # Note that, for example, qubit 0 will correspond to the last (rightmost) char in measured_qubit_values_string -- i.e. the char at index `-(0 + 1)` = `-1`
-            qubit_value = int(measured_qubit_values_string[-(attempt.qubit_index + 1)])
-            
-            # Given a list of multiple guesses currently associated with this attempt, qubit_value gives us the index of the single guess that we should use going forward (discarding the others)
-            current_guess_list = list(attempt.guess_to_feedback_dict.keys())
-            # Randomly chosen (via superposition collapse) guess that, going forward, will be the ONLY guess associated with this attempt
-            chosen_guess: str = current_guess_list[qubit_value]
-            # Feedback associated with randomly chosen guess
-            # Note that chosen_guess_feedback is NOT independently chosen -- it is always the feedback associated with chosen_guess!
-            chosen_guess_feedback: str = attempt.guess_to_feedback_dict[chosen_guess]
-            # Overwrite existing guess_to_feedback dict for this attempt to consist of just this new guess
-            attempt.guess_to_feedback_dict = {chosen_guess: chosen_guess_feedback}
-
-            # Finally, update the attempt type, now that:
-            #   The corresponding qubit's superposition has been collapsed to a single classical value
-            #   The list of multiple guesses associated with this attempt has been reduced to a single guess
-            attempt.type = attempt_types.CLASSICAL
-
-    # At this point, all quantum attempts have been converted to classical attempts and each of their associated guess lists has been reduced to a single guess
-
-    # There doesn't seem to be a way to just continue a previous circuit execution -- instead, every execution starts over from the very beginning. This means that, if we continue reusing the same circuit for all executions, it will have multiple measurements (where all but the latest are redundant), we will be putting qubits that represent FORMERLY quantum attempts back into superposition needlessly and we will have to worry about potential complications caused by those unnecessary superpositions (that we already measured in a previous circuit execution) collapsing to a different value this time.
-    # Thus, instead, for simplicity, we just create a brand new circuit for execution next time -- formerly quantum attempts that are now classical attempts will remain classical in this new circuit (their qubits will not have any gates applied to them)
-    new_game_circuit = create_circuit(num_attempts)
-    return new_game_circuit
-
-
 def did_user_guess_answer(classical_attempts_list: list[Attempt], answer):
     """Given a list of classical attempts, check if any of the guesses made by the user in those attempts was correct (i.e. matched the answer)
     
@@ -862,7 +856,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Note that this choice does NOT use up an attempt!
 
             # Measure all attempts
-            game_circuit = measure_circuit(game_circuit, attempts_list)
+            game_circuit = measure_game_circuit(game_circuit, attempts_list)
             
             # Now that all quantum attempts made so far have been collapsed to classical attempts, check to see if any of them happened to have collapsed to the right answer
             # Since game isn't over yet, only print game result and exit if one of the user's quantum attempts collapsed to the correct answer (i.e. if user guessed correct answer early) -- if not, continue game
