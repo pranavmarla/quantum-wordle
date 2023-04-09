@@ -104,3 +104,23 @@ TODO:
         - Regarding platform: Only tested on IBM Quantum Lab
         - Regarding input prompt bug: Not caused by my code, will require them to stop kernel and restart
         - Display settings: Due to large output size, to ensure all of it can be seen without scrolling, recommend reducing browser zoom to 100% and using a larger monitor. Otherwise, Jupyter notebook might forcefully jerk you around (scroll up/down)
+
+Feedback:
+
+    Available Letters is confusing:
+        Rename -> Unused
+        or
+        Only remove totally wrong letters
+
+        or
+        Don't print letters at all
+            - No, users need to see letters to know what their options are
+        or
+        Rename to Unused , show all lettesr and highlight unused leters
+            - Perhaps by making used lowercase
+
+    Change letter order back to QWERTY order
+
+    Test: 
+    Word guess with numbers, special chars, upper chars
+
