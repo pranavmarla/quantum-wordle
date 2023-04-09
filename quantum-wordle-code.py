@@ -59,6 +59,11 @@ NUM_GUESSES_IN_SUPERPOSITION = 2
 # Backend used to execute quantum circuits
 QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
 
+# Text after this ANSI escape sequence is displayed in bold
+ANSI_ESCAPE_CODE_BOLD = '\033[1m'
+# Text after this ANSI escape sequence has its formatting reset to default
+ANSI_ESCAPE_CODE_RESET = '\033[0m'
+
 
 class AttemptType(Enum):
     """Used to indicate type of an attempt (i.e. classical or quantum)"""
@@ -79,6 +84,34 @@ class Attempt:
         self.guess_to_feedback_dict = {}
         # For quantum attempts (multiple guesses), we intentionally display the guess feedback strings in a random order, so it's not clear which guess each feedback string corresponds to. This list stores the feedback strings in the random order that they will be displayed in
         self.feedback_display_list = None
+
+
+def apply_bold_text(text: str, ansi_escape_code_bold=ANSI_ESCAPE_CODE_BOLD, ansi_escape_code_reset=ANSI_ESCAPE_CODE_RESET) -> str:
+    """Returns given text formatted in bold
+    
+    Input:
+        text: String that you want to be formatted in bold
+        ansi_escape_code_bold: ANSI escape sequence to add bold formatting to any following text
+        ansi_escape_code_reset: ANSI escape sequence to reset formatting for any following text
+        
+    Output:
+        Same input text, but formatted in bold
+    """
+    return f'{ansi_escape_code_bold}{text}{ansi_escape_code_reset}'
+
+
+def remove_bold_text(text: str, ansi_escape_code_bold=ANSI_ESCAPE_CODE_BOLD, ansi_escape_code_reset=ANSI_ESCAPE_CODE_RESET) -> str:
+    """Returns given text with any bold formatting removed
+
+    Input:
+        text: String whose bold formatting you want to be removed
+        ansi_escape_code_bold: ANSI escape sequence to add bold formatting to any following text
+        ansi_escape_code_reset: ANSI escape sequence to reset formatting for any following text
+        
+    Output:
+        Same input text, but without any bold formatting
+    """
+    return text.removeprefix(ansi_escape_code_bold).removesuffix(ansi_escape_code_reset)
 
 
 def create_circuit(num_qubits: int, num_classical_bits: int = None) -> QuantumCircuit:
@@ -254,6 +287,9 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
             'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
                 'Z', 'X', 'C', 'V', 'B', 'N', 'M'
         ]
+    # Start off all letters formatted to be bold, to indicate that they're unused
+    for index, letter in enumerate(letter_usage_list):
+        letter_usage_list[index] = apply_bold_text(letter)
 
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
     game_circuit = create_circuit(max_attempts)
@@ -376,22 +412,38 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-def print_subset_letter_usage(letter_usage_list, start_index, stop_index):
-    """Print a subset of the letter usage list, from start_index (inclusive) to stop_index (inclusive)"""
-    for index in range(start_index, stop_index+1):
-        print(f'{letter_usage_list[index]:>2}', end='')
-
-
-def print_letter_usage(letter_usage_list, space=SPACE_CHAR):
-    """Display all the letters, indicating which have been used so far (in a guess) and which haven't"""
+def print_subset_letter_usage(letter_usage_list: list[str], start_index: int, stop_index: int, extra_letter_width: int = 1) -> None:
+    """Print a subset of the letter usage list, from start_index (inclusive) to stop_index (inclusive)
     
-    print('\nUNUSED / used', end='')
+    Input:
+        letter_usage_list
+        start_index
+        stop_index
+        extra_letter_width: Extra padding (width) that the letter should have when printed. Note that this is in ADDITION to the existing letter width. The letter will be printed right-aligned within this width
+
+    Output:
+        None
+    """
+    for index in range(start_index, stop_index+1):
+        # Note: Usually, a letter is assumed to have only 1 char and, thus, a width of 1. However, in this case, the letters can be formatted, which means they can have extra invisble characters (ANSI escape sequences) which will increase their existing width and, thus, increase the padding needed to achieve the same visual effect as applying less padding to a single-char letter
+        # In other words, the amount of padding we need to apply to achieve a certain visual spacing depends on the existing letter width
+        letter = letter_usage_list[index]
+        existing_letter_width = len(letter)
+        total_letter_width = existing_letter_width + extra_letter_width
+        print(f'{letter:>{total_letter_width}}', end='')
+
+
+def print_letter_usage(letter_usage_list, space: str = SPACE_CHAR):
+    """Display all the letters, visually indicating which have been used so far (in a guess) and which haven't"""
+    
+    # Make sure the word 'UNUSED' is itself in bold formatting
+    print(f'\n{apply_bold_text("UNUSED")} / used', end='')
     # Print first 10 letters
     print(f'{space*6}', end='')
     print_subset_letter_usage(letter_usage_list, 0, 9)
     print()
     
-    print(f'{space*2}Letters:', end='')
+    print(f'{space*2}letters:', end='')
     # Print next 9 letters
     print(f'{space*10}', end='')
     print_subset_letter_usage(letter_usage_list, 10, 18)
@@ -414,9 +466,15 @@ def update_letter_usage(guess: str, letter_usage_list: list[str]) -> list[str]:
         Updated letter usage list
     """
     for letter in guess:
+        # Remember: All letters in letter_usage_list start off in bold formatting so, to facilitate a comparison between those letters and the letters in guess, we need to ensure the letters in guess are also in bold formatting
+        letter = apply_bold_text(letter)
+
         if letter in letter_usage_list:
             # Visually distinguish the used letters
             letter_index = letter_usage_list.index(letter)
+            # Remove bold formatting from the used letter
+            letter_usage_list[letter_index] = remove_bold_text(letter_usage_list[letter_index])
+            # Convert the used letter to lower_case
             letter_usage_list[letter_index] = letter_usage_list[letter_index].lower()
     return letter_usage_list
 
