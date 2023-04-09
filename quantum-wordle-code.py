@@ -59,14 +59,6 @@ NUM_GUESSES_IN_SUPERPOSITION = 2
 # Backend used to execute quantum circuits
 QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
 
-# List of letters that have not yet been used in any guess
-# Note that, for ease of use, the letters are in "keyboard order" (i.e. the same order as a computer keyboard)
-AVAILABLE_LETTERS = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-        'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-            'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-    ]
-
 
 class AttemptType(Enum):
     """Used to indicate type of an attempt (i.e. classical or quantum)"""
@@ -202,10 +194,18 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
         qubit_index = i
         attempts_list.append(Attempt(qubit_index))
 
+    # Create list of available letters
+    # Note that, to be intuitiveily obvious which letter is missing (used), the letters are in alphabetical order, NOT "keyboard order" (the order in which letters are displayed on a computer keyboard)
+    available_letters = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+                'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        ]
+
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
     game_circuit = create_circuit(max_attempts)
 
-    return answer, attempts_list, game_circuit
+    return answer, attempts_list, available_letters, game_circuit
 
 
 # def print_same_line(output_string):
@@ -734,7 +734,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
         None
     """
 
-    answer, attempts_list, game_circuit = setup_game()
+    answer, attempts_list, available_letters, game_circuit = setup_game()
 
     #! DEBUG
     answer = 'APPLE'
