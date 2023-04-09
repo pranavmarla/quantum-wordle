@@ -59,6 +59,14 @@ NUM_GUESSES_IN_SUPERPOSITION = 2
 # Backend used to execute quantum circuits
 QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
 
+# List of letters that have not yet been used in any guess
+# Note that, for ease of use, the letters are in "keyboard order" (i.e. the same order as a computer keyboard)
+AVAILABLE_LETTERS = [
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+        'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+            'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+    ]
+
 
 class AttemptType(Enum):
     """Used to indicate type of an attempt (i.e. classical or quantum)"""
@@ -354,12 +362,31 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
-#! DEBUG
-def print_available_letters(space=SPACE_CHAR):
+def print_subset_available_letters(available_letters, start_index, stop_index):
+    """Print a subset of the available letters, from start_index (inclusive) to stop_index (inclusive)"""
+    for index in range(start_index, stop_index+1):
+        print(f'{available_letters[index]:>2}', end='')
+
+
+def print_available_letters(available_letters, space=SPACE_CHAR):
+    """Display all the available letters (i.e. the letters that have not yet been used in any guess)"""
+
+    print('\nAvailable Letters:', end='')
+
+    # Print first 10 letters
+    print(space, end='')
+    print_subset_available_letters(available_letters, 0, 9)
     print()
-    print('Available Letters:  Q W E R T Y U I O P')
-    print(f'{space*21}A S D F G H J K L')
-    print(f'{space*22}Z X C V B N M')
+    
+    # Print next 9 letters
+    print(f'{space*20}', end='')
+    print_subset_available_letters(available_letters, 10, 18)
+    print()
+
+    # Print last 7 letters
+    print(f'{space*21}', end='')
+    print_subset_available_letters(available_letters, 19, 25)
+    print()
 
 
 def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
