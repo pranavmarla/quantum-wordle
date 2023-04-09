@@ -250,9 +250,9 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
     # Create list of available letters
     # Note that, to be intuitiveily obvious which letter is missing (used), the letters are in alphabetical order, NOT "keyboard order" (the order in which letters are displayed on a computer keyboard)
     available_letters = [
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-                'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+            'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+                'Z', 'X', 'C', 'V', 'B', 'N', 'M'
         ]
 
     # Setup quantum circuit to encode info regarding the attempts -- specifically, for each attempt, which of its guesses should be used
