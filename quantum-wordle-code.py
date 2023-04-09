@@ -362,6 +362,24 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
+def update_available_letters(guess: str, available_letters: list[str]) -> list[str]:
+    """Given a guess and a list of available letters, remove the letters used in the guess from the list of available letters
+
+    Input:
+        guess
+        available_letters
+
+    Output:
+        Updated list of available letters
+    """
+    for letter in guess:
+        if letter in available_letters:
+            # Note: To preserve output spacing and position, to make it visually obvious which letter has been used, do not actually REMOVE letter from available letters list -- instead, just replace it with an empty string
+            letter_index = available_letters.index(letter)
+            available_letters[letter_index] = ''
+    return available_letters
+
+
 def print_subset_available_letters(available_letters, start_index, stop_index):
     """Print a subset of the available letters, from start_index (inclusive) to stop_index (inclusive)"""
     for index in range(start_index, stop_index+1):
@@ -389,11 +407,12 @@ def print_available_letters(available_letters, space=SPACE_CHAR):
     print()
 
 
-def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
+def print_game_state(attempts_list: list[Attempt], available_letters, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
     Input:
         attempts_list: List of all attempts, both used and unused
+        available_letters: List of all unused letters
         word_length: Number of letters that the answer contains and, thus, that every guess has to contain
         max_attempts: Number of chances that user has to guess the answer
         attempt_types: Enum containing the various attempt types
@@ -432,7 +451,7 @@ def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGT
 
     #! DEBUG
     # Print available letters
-    print_available_letters()
+    print_available_letters(available_letters)
 
 
 def get_guess_feedback(guess_str: str, answer_str: str, word_length: int = WORD_LENGTH, right_guess_feedback_string: str = RIGHT_GUESS_FEEDBACK_STRING) -> str:
@@ -750,7 +769,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
 
     while True:
 
-        print_game_state(attempts_list)
+        print_game_state(attempts_list, available_letters)
         
         if next_available_attempt_index <= final_attempt_index:
             # There is still at least one attempt available to use, so retrieve it
@@ -805,10 +824,12 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             guess = safe_guess_input('Enter guess: ')
             # Even if the guess is correct, we want to get and store its feedback so we can display it
             current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+            available_letters = update_available_letters(guess, available_letters)
+
             # Stop game if the guess is correct
             if guess == answer:
                 # Print game state showing correct answer
-                print_game_state(attempts_list)
+                print_game_state(attempts_list, available_letters)
                 # Print message
                 print_game_result(True, answer)
                 break
@@ -830,6 +851,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
                         print('Duplicate guess! Please enter a different word')
                     else:
                         current_attempt.guess_to_feedback_dict[guess] = get_guess_feedback(guess, answer)
+                        available_letters = update_available_letters(guess, available_letters)
                         break
                 # Note: Even if one of the guesses is correct, since it's in a superposition (and thus the user has uncertainty as to exactly WHICH guess is correct), we do NOT stop the game
             
@@ -848,7 +870,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # Only check the list of attempts made SO FAR (index 0 to previous_attempt_index) -- no point in checking unused attempts. Also, did_user_guess_answer() only accepts classical attempts, not unused attempts
             if did_user_guess_answer(attempts_list[:(previous_attempt_index+1)], answer):
                 # Show game state after measurement/collapse
-                print_game_state(attempts_list)
+                print_game_state(attempts_list, available_letters)
                 # Print success message
                 print_success_message(answer)
                 # Exit early
