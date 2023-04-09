@@ -1,7 +1,5 @@
 # **Capstone Project: Quantum Wordle**
 
-By **Pranav Marla** (`4181_Marla`)
-
 ## **Overview**
 
 This is a fully functioning, playable implementation of a quantum game.
