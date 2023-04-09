@@ -99,7 +99,8 @@ Before running the game, there are a few things to keep in mind:
 Run the following code cell to do the one-time setup for the game.
 
 ## **Play Game**
-To actually play the game, run the following code cell. Note that, if you want to play the game again later, this is the only code cell you will need to re-run. Have fun! 😀
+To actually play the game, run the following code cell. Note that, if you want to play the game again later, this is the only code cell you will need to re-run.  
+Have fun! 😀
 
 ## **Sources**
 
@@ -111,7 +112,7 @@ To actually play the game, run the following code cell. Note that, if you want t
 - Wordle word lists:
     - Solutions: https://gist.github.com/cfreshman/a7b776506c73284511034e63af1017ee
     - Allowed guesses (excluding solutions): https://gist.github.com/cfreshman/d5fb56316158a1575898bba1eed3b5da
-- Quantum Tic Tac Toe: Semester 1 Lab 11 of Qubit by Qubit course
+- Quantum Tic Tac Toe: Semester 1 Lab 11 of Qubit by Qubit's *Introduction to Quantum Computing* course
 - Printing emojis (eg. 🟩) with Python:
     - https://unicode.org/emoji/charts/full-emoji-list.html#geometric
 - Calculating number of bits needed to represent a number in binary:
