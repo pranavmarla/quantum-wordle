@@ -784,7 +784,7 @@ def run_game(classical_attempt_option=CLASSICAL_ATTEMPT_OPTION, quantum_attempt_
             # There appears to be a longstanding Jupyter notebook bug where input prompt occasionally does not appear (seemingly because previous output is printed out of order and overwrites it), which means that the code is stuck waiting for input that user cannot provide. In particular, appears to only occur at this point in code, possibly because of large quantity of output being printed above right before asking for input below, repeatedly (in a loop)
             # After lot of research and experimentation, the combination of adding a delay and flushing pending output before asking for input seems to prevent that bug from being triggered
             # This delay was experimentally determined to be pretty reliable
-            sleep(0.17)
+            sleep(0.18)
             print(end='', flush=True)
             
             # After printing above options, print error message if user previously made an invalid choice
