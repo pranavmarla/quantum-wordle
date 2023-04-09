@@ -357,6 +357,14 @@ def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_
     return feedback_display_list
 
 
+#! DEBUG
+def print_available_letters(space=SPACE_CHAR):
+    print()
+    print('Available Letters:  Q W E R T Y U I O P')
+    print(f'{space*21}A S D F G H J K L')
+    print(f'{space*22}Z X C V B N M')
+
+
 def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
@@ -397,6 +405,10 @@ def print_game_state(attempts_list: list[Attempt], word_length: int = WORD_LENGT
         # Quantum attempt
         else:
             attempt.feedback_display_list = print_quantum_attempt(attempt_num, guess_to_feedback_dict, attempt.feedback_display_list)
+
+    #! DEBUG
+    # Print available letters
+    print_available_letters()
 
 
 def get_guess_feedback(guess_str: str, answer_str: str, word_length: int = WORD_LENGTH, right_guess_feedback_string: str = RIGHT_GUESS_FEEDBACK_STRING) -> str:
