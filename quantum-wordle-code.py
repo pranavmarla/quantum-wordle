@@ -279,8 +279,8 @@ def setup_game(max_attempts: int = MAX_ATTEMPTS):
         qubit_index = i
         attempts_list.append(Attempt(qubit_index))
 
-    # Create list of available letters
-    # Note that, to be intuitiveily obvious which letter is missing (used), the letters are in alphabetical order, NOT "keyboard order" (the order in which letters are displayed on a computer keyboard)
+    # Create list of all letters, visually distinguishing which ones have or have not been used in guesses so far
+    # Note that, for ease of use (based on user feedback), the letters are in "keyboard order" (the order in which letters are displayed on a computer keyboard), not alphabetical order!
     letter_usage_list = [
         'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
             'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
