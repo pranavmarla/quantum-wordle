@@ -59,9 +59,6 @@ NUM_GUESSES_IN_SUPERPOSITION = 2
 # Backend used to execute quantum circuits
 QUANTUM_BACKEND = Aer.get_backend('qasm_simulator')
 
-# When this character is printed, it moves the cursor back to the beginning of the current line, which allows us to potentially overwrite any previous output on the current line
-RESET_CURSOR_CHAR = '\r'
-
 
 class AttemptType(Enum):
     """Used to indicate type of an attempt (i.e. classical or quantum)"""
@@ -304,7 +301,7 @@ def random_number_generator(max, quantum_backend=QUANTUM_BACKEND):
     return random_decimal_num
 
 
-def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_list, space=SPACE_CHAR, reset_cursor_char=RESET_CURSOR_CHAR):
+def print_quantum_attempt(attempt_num, guess_to_feedback_dict, feedback_display_list, space=SPACE_CHAR):
     """Prints quantum attempt. Assumed to have two guesses"""
 
     # Number of spaces in below commands determined experimentally
