@@ -479,7 +479,7 @@ def update_letter_usage(guess: str, letter_usage_list: list[str]) -> list[str]:
     return letter_usage_list
 
 
-def print_game_state(attempts_list: list[Attempt], letter_usage_list, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> None:
+def print_game_state(attempts_list: list[Attempt], letter_usage_list, word_length: int = WORD_LENGTH, max_attempts: int = MAX_ATTEMPTS, num_guesses_in_superposition=NUM_GUESSES_IN_SUPERPOSITION, attempt_types: AttemptType = AttemptType) -> None:
     """Print out all the attempts, including any guesses the user might have made in those attempts and their associated feedback
     
     Input:
@@ -499,6 +499,7 @@ def print_game_state(attempts_list: list[Attempt], letter_usage_list, word_lengt
 
     print('Welcome to Quantum Wordle!')
     print(f'Can you guess the mystery {word_length}-letter word in {max_attempts} attempts or less?')
+    print(f'Remember: Each quantum attempt has {num_guesses_in_superposition} guesses and {num_guesses_in_superposition} clues, but you do NOT know which clue corresponds to which guess until you measure the attempt!')
 
     for attempt_index, attempt in enumerate(attempts_list):
         
