@@ -205,7 +205,7 @@ def encode_quantum_attempt(current_attempt: Attempt, game_circuit: QuantumCircui
     game_circuit.h(current_attempt.qubit_index)
 
 
-def measure_game_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], num_attempts: int = MAX_ATTEMPTS, attempt_types: AttemptType = AttemptType) -> QuantumCircuit:
+def measure_game_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attempt], quantum_backend=QUANTUM_BACKEND, attempt_types: AttemptType = AttemptType, num_attempts: int = MAX_ATTEMPTS) -> QuantumCircuit:
     """Measure all qubits in game circuit, collapsing any that are in superposition to a classical value. Update any of the corresponding attempts that are quantum to classical
     
     Input:
@@ -219,8 +219,7 @@ def measure_game_circuit(game_circuit: QuantumCircuit, attempts_list: list[Attem
     game_circuit.measure_all(add_bits=False)
 
     # Execute circuit
-    backend = Aer.get_backend('qasm_simulator')
-    job = execute(game_circuit, backend=backend, shots=1)
+    job = execute(game_circuit, backend=quantum_backend, shots=1)
     result = job.result()
     counts = result.get_counts(game_circuit)
     # Since we only ran one shot above, we already know that we only have one measured value. Specifically, that value is a single string containing the values (0/1) of every qubit in the circuit after measurement
